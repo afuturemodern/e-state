@@ -211,26 +211,106 @@ contract ERC721 {
    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
 }
-contract AssetToken is ERC721 {
+contract AssetToken is ERC721, Ownable {
     using SafeMath for uint;
-    mapping(uint256 => bool) rentable;
-    mapping(uint256 => bool) rentToOwnable;
-    mapping(uint256 => uint256) rentToOwnAmount;
-    mapping(address => bool) hasCred;
+    DeclaToken public dec;
+    mapping(uint256 => bool) public rentable;
+    mapping(uint256 => bool) public rentToOwnable;
+    mapping(uint256 => uint256) public rentToOwnAmount;
+    mapping(address => bool) public hasCred;
+    mapping(uint256 => uint256) public votesFor;
+    mapping (uint256 => uint256) public votesAgainst;
+    
+    mapping(uint256 => bool) public validated;
+    mapping(uint256 => bool) public invalidated;
+    mapping(uint256 => bool) public forSale;
+    mapping(uint256 => uint256) public tokenPrice;
+    
+    mapping (address => uint) public tokenValidations;
+    
 
-    uint256 reqd_amount = 10;
+    uint256 reqd_erc223_amount = 10;
+    uint256 reqd_votes_amount = 5;
+    uint256 credThreshold = 5;
+    uint256 reqd_votes_against = 200;
     mapping(uint256 => bytes[]) ipfsHash;
     mapping(uint256 => bytes[]) name;
-    mapping(uint256 => bytes) physaddr;
+    mapping(uint256 => bytes[]) physaddr;
     function CreateAssetToken(string name, string physaddr){
-        require DeclaToken.balanceOf(msg.sender) > reqd_amount;
-        DeclaToken.Lock(msg.sender, reqd_amount);
+        require dec.balanceOf(msg.sender) > reqd_erc223_amount;
+        dec.Lock(msg.sender, reqd_erc223_amount);
         __totalSupply.add(1)
         addToTokenList(msg.sender, __totalSupply.sub(1));
         balances[owner].add(1)
         tokenOwners[__totalSupply.sub(1)] = msg.sender;
         tokenExists[__totalSupply.sub(1)] = true;
+        emit CreateAssetToken(msg.sender, __totalSupply.sub(1));
     }
+    function GiveCredO(address _recipient) onlyOwner {
+        hasCred[_recipient] = true;
+    }
+    function GrantCred(address _recipient) internal{
+        hasCred[_recipient] = true;
+        emit CredGiven(_recipient);
+    }
+    function RevokeCred(address _recipient) internal{
+        hasCred[_recipient] = false;
+        emit CredLost(_recipient);
+    }
+    function VoteAssetToken(uint256 _tokenId) public{//function to vote for validity of token/owner
+        require(hasCred[msg.sender]);
+        votesFor[_tokenId] = votesFor[_tokenId].add(1);
+        if(votesFor[_tokenId] >= reqd_votes_amount){
+            ValidateAssetToken(_tokenId);
+        }
+        emit VoteToken(_tokenId, msg.sender);
+
+    }
+    function ValidateAssetToken(uint256 _tokenId) internal{
+        validated[_tokenId] = true;
+        tokenValidations[tokenOwners[_tokenId]] = tokenValidations[tokenOwners[_tokenId]].add(1);
+        if(tokenValidations[tokenOwners[_tokenId]] >= credThreshold){
+            GrantCred(tokenOwners[_tokenId]);
+        }
+        emit ValidateToken(_tokenId, tokenOwners[_tokenId]);
+    }
+    function InvalidateAssetToken(uint256 _tokenId) internal{
+        validated[_tokenId] = false;
+        invalidated[_tokenId] = true;
+        tokenValidations[tokenOwners[_tokenId]] = tokenValidations[tokenOwners[_tokenId]].sub(1);
+        if(tokenValidations[tokenOwners[_tokenId]] < credThreshold){
+            RevokeCred(tokenOwners[_tokenId]);
+        }
+        emit InvalidateToken(_tokenId, tokenOwners[_tokenId]);
+
+    }
+    function ListforSale(uint256 _tokenId, uint256 _price) returns(bool res) public {
+        require(msg.sender == ownerTokens[_tokenId]);
+        require(validated[_tokenId]);
+        require (!invalidated[_tokenId]);
+        forSale[_tokenId] = true;
+        tokenPrice[_tokenId] = _price;
+        emit ListToken(_tokenId, _price);
+        return true; 
+    }
+
+    function DeListforSale(uint256 _tokenId){
+
+    }
+    function BuyToken(uint256 _tokenId){
+        require(DeclaToken.balanceOf(msg.sender) >= tokenPrice[_tokenId]);
+        require(forSale[_tokenId]);
+                
+        
+    }
+    event ListToken(uint256 _tokenId, uint256 _price);
+    
+    event CreateAssetToken(address indexed _creator, uint256 _tokenId);
+    event ValidateToken(uint256 _tokenId, address _owner);
+    event InvalidateToken(uint256 _tokenId, address _owner);
+    event VoteToken(uint256 _tokenId, address voter);
+    event CredGiven(address _recipient);
+    event CredLost(address _recipient);
 
 }
 contract Pausable is Ownable {
