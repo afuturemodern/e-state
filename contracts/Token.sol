@@ -141,7 +141,7 @@ contract ERC721 {
    // Functions that define ownership
    mapping(uint256 => address) private tokenOwners;
    mapping(uint256 => bool) private tokenExists;
-   mapping(uint256 => mapping(uint256=>address)) public ownerHistory;
+   //mapping(uint256 => mapping(uint256=>address)) public ownerHistory;
    mapping(address => mapping(address => uint256)) public allowed;
    mapping(address => mapping(uint256 => uint256)) private ownerTokens;
    mapping(uint256 => string) tokenLinks;
@@ -211,7 +211,28 @@ contract ERC721 {
    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
 }
+contract AssetToken is ERC721 {
+    using SafeMath for uint;
+    mapping(uint256 => bool) rentable;
+    mapping(uint256 => bool) rentToOwnable;
+    mapping(uint256 => uint256) rentToOwnAmount;
+    mapping(address => bool) hasCred;
 
+    uint256 reqd_amount = 10;
+    mapping(uint256 => bytes[]) ipfsHash;
+    mapping(uint256 => bytes[]) name;
+    mapping(uint256 => bytes) physaddr;
+    function CreateAssetToken(string name, string physaddr){
+        require DeclaToken.balanceOf(msg.sender) > reqd_amount;
+        DeclaToken.Lock(msg.sender, reqd_amount);
+        __totalSupply.add(1)
+        addToTokenList(msg.sender, __totalSupply.sub(1));
+        balances[owner].add(1)
+        tokenOwners[__totalSupply.sub(1)] = msg.sender;
+        tokenExists[__totalSupply.sub(1)] = true;
+    }
+
+}
 contract Pausable is Ownable {
     event Pause();
     event Unpause();
@@ -241,11 +262,13 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
 
     address public icoContract;
     using SafeMath for uint;
+    mapping(address => uint256) LockedTokens;
     
     function DeclaToken() public {
         _balanceOf[msg.sender] = _totalSupply;
     }
-
+    event Lock(address indexed locker, uint256 value);
+    event Burn(address indexed burner, uint256 value);
     function totalSupply() public constant returns (uint) {
         return _totalSupply;
     }
@@ -269,6 +292,27 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
             return true;
         }
         return false;
+    }
+
+    function burn(uint256 _value) public {
+        _burn(msg.sender, _value);
+    }
+    function lock(uint256 _value) public {
+        _lock(msg.sender, _value);
+    }
+    function _lock(address _who, uint256 _value) internal {
+        require(_value <= balances[_who]);
+        balanceOf[_who] = balanceOf[_who].sub(_value);
+        LockedTokens[_who] = LockedTokens[_who].add(_value);
+        emit Lock(_who, _value);
+    }
+    function _burn(address _who, uint256 _value) internal {
+        require(_value <= balances[_who]);
+
+        _balanceOf[_who] = _balanceOf[_who].sub(_value);
+        _totalSupply = _totalSupply.sub(_value)
+        emit Burn(_who, _value);
+        emit Transfer(_who, address(0), _value);
     }
 
     function transfer(address _to, uint _value, bytes _data) whenNotPaused onlyPayloadSize(2 * 32) public returns (bool) {
