@@ -1,5 +1,6 @@
 const DeclaToken = artifacts.require("DeclaToken");
 const IcoContract = artifacts.require("IcoContract");
+const AssetToken = artifacts.require("AssetToken");
 
 module.exports = function(deployer) {
   deployer.deploy(DeclaToken).then(() => {
@@ -16,6 +17,12 @@ module.exports = function(deployer) {
       return DeclaToken.deployed().then(function(instance) {
         return instance.setIcoContract(IcoContract.address);
       });  
+    }).then(function(){
+      deployer.deploy(AssetToken, DeclaToken.address).then( () => {
+      return DeclaToken.deployed().then(function(instance){
+        return instance.setAssetContract(AssetToken.address);
+      });
     });
   });
+});
 };
