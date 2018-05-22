@@ -4,6 +4,10 @@ const AssetToken = artifacts.require("AssetToken");
 
 module.exports = function(deployer) {
   deployer.deploy(DeclaToken).then(() => {
+    deployer.deploy(AssetToken, DeclaToken.address).then( () => {
+      return DeclaToken.deployed().then(function(instance){
+        return instance.setAssetContract(AssetToken.address);
+      })});
     return deployer.deploy(
       IcoContract,
       '0x627306090abaB3A6e1400e9345bC60c78a8BEf57', //owner address
@@ -17,12 +21,6 @@ module.exports = function(deployer) {
       return DeclaToken.deployed().then(function(instance) {
         return instance.setIcoContract(IcoContract.address);
       });  
-    }).then(function(){
-      deployer.deploy(AssetToken, DeclaToken.address).then( () => {
-      return DeclaToken.deployed().then(function(instance){
-        return instance.setAssetContract(AssetToken.address);
-      });
     });
   });
-});
 };

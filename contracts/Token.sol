@@ -145,7 +145,7 @@ contract ERC721 {
    //mapping(uint256 => mapping(uint256=>address)) public ownerHistory;
    mapping(address => mapping(address => uint256)) public allowed;
    mapping(address => mapping(uint256 => uint256)) public ownerTokens;
-   mapping(uint256 => string) tokenLinks;
+   mapping(uint256 => string) public tokenLinks;
    function removeFromTokenList(address _owner, uint256 _tokenId) private {
         uint256 i = 0;
         for(i = 0; ownerTokens[_owner][i] != _tokenId; i++){
@@ -243,7 +243,7 @@ contract AssetToken is ERC721, Ownable {
     mapping(uint256 => bytes[]) ipfsHash;
     mapping(uint256 => string) name_t;
     mapping(uint256 => string) physaddr;
-    function CreateAssetToken(string _name_t, string _physaddr) public returns (bool){
+    function CreateAssetToken(string _name_t, string _physaddr, string _link) public returns (bool){
         require(dec.balanceOf(msg.sender) > reqd_erc223_amount);
         dec.lock_by_contract(msg.sender, reqd_erc223_amount);
         __totalSupply.add(1);
@@ -253,8 +253,13 @@ contract AssetToken is ERC721, Ownable {
         tokenExists[__totalSupply.sub(1)] = true;
         name_t[__totalSupply.sub(1)] = _name_t;
         physaddr[__totalSupply.sub(1)] = _physaddr;
+        tokenLinks[__totalSupply.sub(1)] = _link;
         emit CreateToken(msg.sender, __totalSupply.sub(1));
         return true;
+    }
+    function UpdateTokenData(uint256 _tokenId, string _ipfsHash) public returns (bool){
+        require(tokenOwners[_tokenId] == msg.sender);
+        tokenLinks[_tokenId] = _ipfsHash;
     }
     function ChangeName(uint256 _tokenId, string _name_t) public returns (bool){
         require(tokenOwners[_tokenId] == msg.sender);
