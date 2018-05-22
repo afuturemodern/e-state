@@ -14,14 +14,15 @@ interface ERC223 {
 
 contract Ownable {
     address public owner;
-    function Ownable() {
+    //function Ownable() {
+    constructor() public{
         owner = msg.sender;
     }
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-    function transferOwnership(address newOwner) onlyOwner {
+    function transferOwnership(address newOwner) onlyOwner public {
       if (newOwner != address(0)){
         owner = newOwner;
       }
@@ -65,7 +66,7 @@ contract Token {
     mapping (address => uint) internal _balanceOf;
     mapping (address => mapping (address => uint)) internal _allowances;
 
-    function Token(string symbol, string name, uint8 decimals, uint totalSupply) public {
+    constructor(string symbol, string name, uint8 decimals, uint totalSupply) public {
         _symbol = symbol;
         _name = name;
         _decimals = decimals;
@@ -123,19 +124,19 @@ contract ERC721 {
    // ERC20 compatible functions
    using SafeMath for uint;
    string internal __name = "Decla Property Token";
-   function name() constant returns (string name){
+   function name() public constant returns (string _name){
         return __name;
    }
    string internal __symbol = "DPT"; 
-   function symbol() constant returns (string symbol){
+   function symbol() public constant returns (string _symbol){
         return __symbol;
    }
    uint internal __totalSupply;
-   function totalSupply() constant returns (uint256 totalSupply){
+   function totalSupply() public constant returns (uint256 _totalSupply){
         return __totalSupply;
    }
    mapping(address => uint) public balances;
-   function balanceOf(address _owner) constant returns (uint balance){
+   function balanceOf(address _owner) public constant returns (uint balance){
         return balances[_owner];
    }
    // Functions that define ownership
@@ -155,18 +156,18 @@ contract ERC721 {
    function addToTokenList(address _owner, uint256 _tokenId) internal {
         ownerTokens[_owner][balances[_owner]+1] = _tokenId;
    }
-   function ownerOf(uint256 _tokenId) constant returns (address owner){
+   function ownerOf(uint256 _tokenId) public constant returns (address owner){
         require(tokenExists[_tokenId]);
         return tokenOwners[_tokenId];
    }
-   function approve(address _to, uint256 _tokenId){
+   function approve(address _to, uint256 _tokenId) public{
         require(msg.sender == ownerOf(_tokenId));
         require(msg.sender != _to);
 
         allowed[msg.sender][_to] = _tokenId; //this is iffy
         emit Approval(msg.sender, _to, _tokenId);
    }
-   function takeOwnership(uint256 _tokenId){
+   function takeOwnership(uint256 _tokenId) public{
         require(tokenExists[_tokenId]);
         address oldOwner = ownerOf(_tokenId);
         address newOwner = msg.sender;
@@ -182,7 +183,7 @@ contract ERC721 {
         balances[newOwner] = balances[newOwner].add(1);
         emit Transfer(oldOwner, newOwner, _tokenId);
    }
-   function transfer(address _to, uint256 _tokenId){
+   function transfer(address _to, uint256 _tokenId) public{
         address currentOwner = msg.sender;
         address newOwner = _to;
 
@@ -200,11 +201,11 @@ contract ERC721 {
         emit Transfer(currentOwner, newOwner, _tokenId);
 
    }
-   function tokenOfOwnerByIndex(address _owner, uint256 _index) constant returns (uint tokenId){
+   function tokenOfOwnerByIndex(address _owner, uint256 _index) public constant returns (uint tokenId){
         return ownerTokens[_owner][_index];
    }
    // Token metadata
-   function tokenMetadata(uint256 _tokenId) constant returns (string infoUrl){
+   function tokenMetadata(uint256 _tokenId) public constant returns (string infoUrl){
         return tokenLinks[_tokenId];
    }
    // Events
@@ -215,7 +216,7 @@ contract AssetToken is ERC721, Ownable {
     using SafeMath for uint;
     DeclaToken public dec;
     address public decAddress;
-    function AssetToken(address _decAddress){
+    constructor(address _decAddress) public{
         decAddress = _decAddress;
         dec = DeclaToken(decAddress);
     }
@@ -242,7 +243,7 @@ contract AssetToken is ERC721, Ownable {
     mapping(uint256 => bytes[]) ipfsHash;
     mapping(uint256 => string) name_t;
     mapping(uint256 => string) physaddr;
-    function CreateAssetToken(string _name_t, string _physaddr) returns (bool){
+    function CreateAssetToken(string _name_t, string _physaddr) public returns (bool){
         require(dec.balanceOf(msg.sender) > reqd_erc223_amount);
         dec.lock_by_contract(msg.sender, reqd_erc223_amount);
         __totalSupply.add(1);
@@ -255,13 +256,13 @@ contract AssetToken is ERC721, Ownable {
         emit CreateToken(msg.sender, __totalSupply.sub(1));
         return true;
     }
-    function ChangeName(uint256 _tokenId, string _name_t) returns (bool){
+    function ChangeName(uint256 _tokenId, string _name_t) public returns (bool){
         require(tokenOwners[_tokenId] == msg.sender);
         require(tokenExists[_tokenId]);
         name_t[_tokenId] = _name_t;
         return true;
     }
-    function GiveCredO(address _recipient) onlyOwner {
+    function GiveCredO(address _recipient) onlyOwner public{
         hasCred[_recipient] = true;
         emit CredGiven(_recipient);
     }
@@ -312,13 +313,13 @@ contract AssetToken is ERC721, Ownable {
         return true; 
     }
 
-    function DeListforSale(uint256 _tokenId) returns (bool){
+    function DeListforSale(uint256 _tokenId) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         forSale[_tokenId] = false;
         emit DeListToken(_tokenId, msg.sender);
         return true;
     }
-    function BuyToken(uint256 _tokenId) returns (bool){
+    function BuyToken(uint256 _tokenId) public returns (bool){
         require(dec.balanceOf(msg.sender) >= tokenPrice[_tokenId]);
         require(forSale[_tokenId]);
         require(tokenExists[_tokenId]);
@@ -355,12 +356,12 @@ contract Pausable is Ownable {
         require (paused);
         _;
     }
-    function pause() onlyOwner whenNotPaused returns (bool){
+    function pause() onlyOwner whenNotPaused public returns (bool){
         paused = true;
         emit Pause();
         return true;
     }
-    function unpause() onlyOwner whenPaused returns (bool){
+    function unpause() onlyOwner whenPaused public returns (bool){
         paused = false;
         emit Unpause();
         return true;
@@ -374,7 +375,7 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
     using SafeMath for uint;
     mapping(address => uint256) LockedTokens;
     
-    function DeclaToken() public {
+    constructor() public {
         _balanceOf[msg.sender] = _totalSupply;
     }
     event Lock(address indexed locker, uint256 value);
@@ -491,17 +492,17 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
         return _allowances[_owner][_spender];
     }
 
-    function setIcoContract(address _icoContract) onlyOwner {
+    function setIcoContract(address _icoContract) onlyOwner public {
         if (_icoContract != address(0)) {
             icoContract = _icoContract;
         }
     }    
-    function setAssetContract(address _assetContract) onlyOwner{
+    function setAssetContract(address _assetContract) onlyOwner public{
         if (_assetContract != address(0)){
             assetContract = _assetContract;
         }
     }
-    function transferByContract(address _spender, address _recipient, uint256 _value) returns (bool){
+    function transferByContract(address _spender, address _recipient, uint256 _value) public returns (bool){
         assert(_value > 0);
         require(msg.sender == assetContract);
         require(_balanceOf[_spender] >= _value);
@@ -511,7 +512,7 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
         return true;
 
     }
-    function sell(address _recipient, uint256 _value) whenNotPaused returns (bool) {
+    function sell(address _recipient, uint256 _value) whenNotPaused public returns (bool) {
         assert(_value > 0);
         require(msg.sender == icoContract);
         _balanceOf[_recipient] = _balanceOf[_recipient].add(_value);
@@ -541,10 +542,10 @@ contract IcoContract is Pausable{
     event LogCreateICO(address from, address to, uint256 val);
  
     function CreateICO(address to, uint256 val) internal returns (bool){
-        LogCreateICO(0x0, to, val);
+        emit LogCreateICO(0x0, to, val);
         return ico.sell(to, val);
     }
-    function IcoContract(
+    constructor(
         address _ethFundDeposit,
         address _icoAddress,
         uint256 _tokenCreationCap,
@@ -552,7 +553,7 @@ contract IcoContract is Pausable{
         uint256 _fundingStartTime,
         uint256 _fundingEndTime,
         uint256 _minContribution
-    )
+    ) public
     {
         ethFundDeposit = _ethFundDeposit;
         icoAddress = _icoAddress;
@@ -565,7 +566,7 @@ contract IcoContract is Pausable{
         isFinalized = false;
     }
 
-    function () payable {
+    function () payable public{
         createTokens(msg.sender, msg.value);
     }
     function createTokens(address _beneficiary, uint256 _value) internal whenNotPaused {
