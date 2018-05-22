@@ -222,6 +222,7 @@ contract AssetToken is ERC721, Ownable {
     }
     mapping(uint256 => bool) public rentable;
     mapping(uint256 => bool) public rentToOwnable;
+    mapping(uint256 => address[]) public renters;
     mapping(uint256 => uint256) public rentToOwnAmount;
     mapping(address => bool) public hasCred;
     mapping(uint256 => uint256) public votesFor;
@@ -243,6 +244,33 @@ contract AssetToken is ERC721, Ownable {
     mapping(uint256 => bytes[]) ipfsHash;
     mapping(uint256 => string) name_t;
     mapping(uint256 => string) physaddr;
+    function show_name(uint256 _tokenId) public constant returns(string){
+        return name_t[_tokenId];
+    }
+    function show_physaddr(uint256 _tokenId) public constant returns(string){
+        return physaddr[_tokenId];
+    }
+    function show_price(uint256 _tokenId) public constant returns (uint){
+        return tokenPrice[_tokenId];
+    }
+    function show_cred(address _entity) public constant returns (bool){
+        return hasCred[_entity];
+    }
+    function show_votes_for(uint256 _tokenId) public constant returns (uint256){
+        return votesFor[_tokenId];
+    }
+    function show_votes_against(uint256 _tokenId) public constant returns (uint256){
+        return votesAgainst[_tokenId];
+    }
+    function show_validated(uint256 _tokenId) public constant returns (bool){
+        return validated[_tokenId];
+    }
+    function show_invalidated(uint256 _tokenId) public constant returns (bool){
+        return invalidated[_tokenId];
+    }
+    function show_for_sale(uint256 _tokenId) public constant returns (bool){
+        return forSale[_tokenId];
+    }
     function CreateAssetToken(string _name_t, string _physaddr, string _link) public returns (bool){
         require(dec.balanceOf(msg.sender) > reqd_erc223_amount);
         dec.lock_by_contract(msg.sender, reqd_erc223_amount);
@@ -266,6 +294,31 @@ contract AssetToken is ERC721, Ownable {
         require(tokenExists[_tokenId]);
         name_t[_tokenId] = _name_t;
         return true;
+    }
+    function MakeRentable(uint256 _tokenId) public returns (bool){
+        require(msg.sender == tokenOwners[_tokenId]);
+        require(validated[_tokenId]);
+        require(!invalidated[_tokenId]);
+        rentable[_tokenId] = true;
+    }
+    function MakeNonRentable(uint256 _tokenId) public returns (bool){
+        require(msg.sender == tokenOwners[_tokenId]);
+        rentable[_tokenId] = false;
+    }
+    function MakeRentToOwnable(uint256 _tokenId, uint256 _rentToOwnAmount) public returns (bool){
+        require(msg.sender == tokenOwners[_tokenId]);
+        require(validated[_tokenId]);
+        require(!invalidated[_tokenId]);
+        rentToOwnable[_tokenId] = true;
+        rentToOwnAmount[_tokenId] = _rentToOwnAmount;
+    }
+    function ChangeRentToOwnAmount(uint256 _tokenId, uint256 _rentToOwnAmount) public returns (bool){
+        require(msg.sender == tokenOwners[_tokenId]);
+        rentToOwnAmount[_tokenId] = _rentToOwnAmount;
+    }
+    function MakeNonRentToOwnable(uint256 _tokenId) public returns (bool){
+        require(msg.sender == tokenOwners[_tokenId]);
+        rentToOwnable[_tokenId] = false;
     }
     function GiveCredO(address _recipient) onlyOwner public{
         hasCred[_recipient] = true;
