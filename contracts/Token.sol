@@ -1,14 +1,14 @@
 pragma solidity ^0.4.21;
 
 interface ERC20 {
-    function transferFrom(address _from, address _to, uint _value) public returns (bool);
-    function approve(address _spender, uint _value) public returns (bool);
-    function allowance(address _owner, address _spender) public constant returns (uint);
+    function transferFrom(address _from, address _to, uint _value) external returns (bool);
+    function approve(address _spender, uint _value) external returns (bool);
+    function allowance(address _owner, address _spender) external constant returns (uint);
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
 interface ERC223 {
-    function transfer(address _to, uint _value, bytes _data) public returns (bool);
+    function transfer(address _to, uint _value, bytes _data) external returns (bool);
     event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
 }
 
@@ -90,7 +90,7 @@ contract Token {
     }
 
     function balanceOf(address _addr) public constant returns (uint);
-    function transfer(address _to, uint _value) public returns (bool);
+    function transfer(address _to, uint _value) external returns (bool);
     event Transfer(address indexed _from, address indexed _to, uint _value);
 }
 
@@ -394,7 +394,7 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
       _;
     }
 
-    function transfer(address _to, uint _value) whenNotPaused onlyPayloadSize(2 * 32) public returns (bool) {
+    function transfer(address _to, uint _value) whenNotPaused onlyPayloadSize(2 * 32) external returns (bool) {
         if (_value > 0 &&
             _value <= _balanceOf[msg.sender] &&
             !isContract(_to)) {
@@ -446,7 +446,7 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
         emit Transfer(_who, address(0), _value);
     }
 
-    function transfer(address _to, uint _value, bytes _data) whenNotPaused onlyPayloadSize(2 * 32) public returns (bool) {
+    function transfer(address _to, uint _value, bytes _data) whenNotPaused onlyPayloadSize(2 * 32) external returns (bool) {
         if (_value > 0 &&
             _value <= _balanceOf[msg.sender] &&
             isContract(_to)) {
@@ -468,7 +468,7 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
         return codeSize > 0;
     }
 
-    function transferFrom(address _from, address _to, uint _value) whenNotPaused onlyPayloadSize(2 * 32) public returns (bool) {
+    function transferFrom(address _from, address _to, uint _value) whenNotPaused onlyPayloadSize(2 * 32) external returns (bool) {
         if (_allowances[_from][msg.sender] > 0 &&
             _value > 0 &&
             _allowances[_from][msg.sender] >= _value &&
@@ -482,7 +482,7 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
         return false;
     }
 
-    function approve(address _spender, uint _value) public returns (bool) {
+    function approve(address _spender, uint _value) external returns (bool) {
         _allowances[msg.sender][_spender] = _allowances[msg.sender][_spender].add(_value);
         emit Approval(msg.sender, _spender, _value);
         return true;
@@ -587,18 +587,18 @@ contract IcoContract is Pausable{
             require(CreateICO(_beneficiary, tokensToAllocate));
             msg.sender.transfer(etherToRefund);
 
-           ethFundDeposit.transfer(this.balance);
+           ethFundDeposit.transfer(address(this).balance);
            return;
         }
         totalSupply = checkedSupply;
         require(CreateICO(_beneficiary, tokens));
-        ethFundDeposit.transfer(this.balance);
+        ethFundDeposit.transfer(address(this).balance);
 
     }
     function finalize() external onlyOwner {
         require (!isFinalized);
         isFinalized = true;
-        ethFundDeposit.transfer(this.balance);
+        ethFundDeposit.transfer(address(this).balance);
     }
     
 
