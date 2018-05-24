@@ -222,7 +222,6 @@ contract AssetToken is ERC721, Ownable {
     }
     mapping(uint256 => bool) public rentable;
     mapping(uint256 => bool) public rentToOwnable;
-    mapping(uint256 => address[]) public renters;
     mapping(uint256 => uint256) public rentToOwnAmount;
     mapping(address => bool) public hasCred;
     mapping(uint256 => uint256) public votesFor;
@@ -241,14 +240,29 @@ contract AssetToken is ERC721, Ownable {
     uint256 reqd_votes_amount = 5;
     uint256 credThreshold = 5;
     uint256 reqd_votes_against = 200;
-    mapping(uint256 => bytes[]) ipfsHash;
-    mapping(uint256 => string) name_t;
-    mapping(uint256 => string) physaddr;
+    mapping(uint256 => string) public ipfsHash;
+    mapping(uint256 => string) public name_t;
+    mapping(uint256 => string) public physaddr;
+    struct lease_requester{
+        bool is_requester;
+        uint256 amount;
+    }
+    mapping(uint256 => mapping(address => lease_requester)) public lease_requesters;
+    struct renter{
+        bool is_renter;
+        uint256 amount;
+        uint256 time_due;
+        bool paid;
+    }
+    mapping(uint256 => mapping(address => renter)) public renters;
     function show_name(uint256 _tokenId) public constant returns(string){
         return name_t[_tokenId];
     }
     function show_physaddr(uint256 _tokenId) public constant returns(string){
         return physaddr[_tokenId];
+    }
+    function show_ipfsHash(uint256 _tokenId) public constant returns(string){
+        return ipfsHash[_tokenId];
     }
     function show_price(uint256 _tokenId) public constant returns (uint){
         return tokenPrice[_tokenId];
@@ -288,11 +302,18 @@ contract AssetToken is ERC721, Ownable {
     function UpdateTokenData(uint256 _tokenId, string _ipfsHash) public returns (bool){
         require(tokenOwners[_tokenId] == msg.sender);
         tokenLinks[_tokenId] = _ipfsHash;
+        ipfsHash[_tokenId] = _ipfsHash;
     }
     function ChangeName(uint256 _tokenId, string _name_t) public returns (bool){
         require(tokenOwners[_tokenId] == msg.sender);
         require(tokenExists[_tokenId]);
         name_t[_tokenId] = _name_t;
+        return true;
+    }
+    function ChangePhysAddr(uint256 _tokenId, string _physaddr) public returns (bool){
+        require(tokenOwners[_tokenId] == msg.sender);
+        require(tokenExists[_tokenId]);
+        physaddr[_tokenId] = _physaddr;
         return true;
     }
     function MakeRentable(uint256 _tokenId) public returns (bool){
@@ -316,6 +337,29 @@ contract AssetToken is ERC721, Ownable {
         require(msg.sender == tokenOwners[_tokenId]);
         rentToOwnAmount[_tokenId] = _rentToOwnAmount;
     }
+    function RequestLease(uint256 _tokenId, uint256 _price) public returns (bool){
+        require(rentable[_tokenId]);
+        lease_requesters[_tokenId][msg.sender] = lease_requester(true,_price);
+        return true;
+    }
+    function CancelLeaseRequest(uint256 _tokenId) public returns (bool){
+        require(rentable[_tokenId]);
+        lease_requesters[_tokenId][msg.sender] = lease_requester(false, 0);
+        return true;
+    }
+    function RentTo(uint256 _tokenId, address _renter, uint256 _time_due) public returns(bool){
+        require(msg.sender == tokenOwners[_tokenId]);
+        require(rentable[_tokenId]);
+        require(lease_requesters[_tokenId][_renter].is_requester == true);
+        renters[_tokenId][_renter] = renter(true,lease_requesters[_tokenId][_renter].amount, _time_due, false);
+        return true;
+    }
+    function PayRent(uint256 _tokenId) public returns (bool){
+        if(rentToOwnable[_tokenId]){
+            
+        }
+    }
+
     function MakeNonRentToOwnable(uint256 _tokenId) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         rentToOwnable[_tokenId] = false;
