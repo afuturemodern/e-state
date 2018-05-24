@@ -220,6 +220,8 @@ contract AssetToken is ERC721, Ownable {
         decAddress = _decAddress;
         dec = DeclaToken(decAddress);
     }
+    uint256 public post_reward;//TODO - make adjustable with voting by token holders
+
     mapping(uint256 => bool) public rentable;
     mapping(uint256 => bool) public rentToOwnable;
     mapping(uint256 => uint256) public rentToOwnAmount;
@@ -243,6 +245,7 @@ contract AssetToken is ERC721, Ownable {
     mapping(uint256 => string) public ipfsHash;
     mapping(uint256 => string) public name_t;
     mapping(uint256 => string) public physaddr;
+    //renter data
     struct lease_requester{
         bool is_requester;
         uint256 amount;
@@ -264,6 +267,52 @@ contract AssetToken is ERC721, Ownable {
     function get_renter(address _renter, uint256 _tokenId) public constant returns (bool _is_renter, uint256 amount, uint256 late_fee, uint256 total_ever_paid, uint256 time_due, bool paid){
         return (renters[_tokenId][_renter].is_renter, renters[_tokenId][_renter].amount, renters[_tokenId][_renter].late_fee, renters[_tokenId][_renter].total_ever_paid, renters[_tokenId][_renter].time_due, renters[_tokenId][_renter].paid);
     }
+//Community governance
+    struct community_member{
+        uint256 com_tok_balance;
+        bool is_member;
+    }
+    uint256 public community_number;
+    mapping(uint256 => mapping(address => community_member)) public communities;
+    mapping(uint256 => string) public community_names;
+    mapping(uint256 => string) public community_token_names;
+    mapping(uint256 =>mapping(uint256 => bool)) public community_properties;
+    mapping(uint256 => mapping(uint256 => string)) public community_propositions;
+    mapping(uint256 => uint256) public community_token_total;
+    mapping(uint256 => uint256) public community_member_number;
+    function createCommunity(string _name, string _token_name, uint256 _token_amount, uint256 _tokenId) public returns (bool){
+        require(balances[msg.sender] >=1);
+        require(tokenOwners[_tokenId] == msg.sender);
+        community_names[community_number] = _name;
+        community_token_names[community_number] = _token_name;
+        community_properties[community_number][_tokenId] = true;
+        community_member_number[community_number] = 1;
+        community_token_total[community_number] = _token_amount;
+        communities[community_number][msg.sender] = community_member(_token_amount, true);
+        return true;
+    }
+    function createCommunityPropositionDem() public returns(bool){}
+    function createCommunityPropositionTok() public returns(bool){}
+    function voteCommunityPropositionTok() public returns(bool){}
+    function voteCommunityPropositionDem() public returns(bool){}
+
+//end of community governance
+//comment economy
+    struct comment{
+        uint256 upvotes;
+        uint256 downvotes;
+        bool good_enough;
+        address commenter;
+        string hash;
+    }
+    mapping(uint256 => comment[]) tokenComments;
+    function createComment() public returns (bool){}
+    function upvoteComment() public returns (bool){}
+    function downvoteComment() public returns (bool){}
+    function reward_commenter() public returns (bool){}
+    function comment_lookup() public returns (string hash){}
+
+//constant functions 
     function show_name(uint256 _tokenId) public constant returns(string){
         return name_t[_tokenId];
     }
@@ -294,6 +343,7 @@ contract AssetToken is ERC721, Ownable {
     function show_for_sale(uint256 _tokenId) public constant returns (bool){
         return forSale[_tokenId];
     }
+    //Asset token handling
     function CreateAssetToken(string _name_t, string _physaddr, string _link) public returns (bool){
         require(dec.balanceOf(msg.sender) > reqd_erc223_amount);
         dec.lock_by_contract(msg.sender, reqd_erc223_amount);
@@ -325,6 +375,7 @@ contract AssetToken is ERC721, Ownable {
         physaddr[_tokenId] = _physaddr;
         return true;
     }
+    //renting
     function MakeRentable(uint256 _tokenId) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         require(validated[_tokenId]);
@@ -415,6 +466,7 @@ contract AssetToken is ERC721, Ownable {
         require(msg.sender == tokenOwners[_tokenId]);
         rentToOwnable[_tokenId] = false;
     }
+    //cred
     function GiveCredO(address _recipient) onlyOwner public{
         hasCred[_recipient] = true;
         emit CredGiven(_recipient);
@@ -427,6 +479,7 @@ contract AssetToken is ERC721, Ownable {
         hasCred[_recipient] = false;
         emit CredLost(_recipient);
     }
+    //voting/validation
     function VoteAssetToken(uint256 _tokenId) public{//function to vote for validity of token/owner
         require(hasCred[msg.sender]);
         require(tokenExists[_tokenId]);
@@ -455,6 +508,7 @@ contract AssetToken is ERC721, Ownable {
         emit InvalidateToken(_tokenId, tokenOwners[_tokenId]);
 
     }
+    //sale
     function ListforSale(uint256 _tokenId, uint256 _price) public returns(bool res) {
         require(msg.sender == tokenOwners[_tokenId]);
         require(validated[_tokenId]);
