@@ -249,6 +249,9 @@ contract AssetToken is ERC721, Ownable {
         uint256 late_fee;
     }
     mapping(uint256 => mapping(address => lease_requester)) public lease_requesters;
+    function get_lease_requester(address _requester, uint256 _tokenId) public constant returns(bool is_requester, uint256 amount, uint256 late_fee){
+        return (lease_requesters[_tokenId][_requester].is_requester, lease_requesters[_tokenId][_requester].amount, lease_requesters[_tokenId][_requester].late_fee);
+    }
     struct renter{
         bool is_renter;
         uint256 amount;
@@ -258,6 +261,9 @@ contract AssetToken is ERC721, Ownable {
         bool paid;
     }
     mapping(uint256 => mapping(address => renter)) public renters;
+    function get_renter(address _renter, uint256 _tokenId) public constant returns (bool _is_renter, uint256 amount, uint256 late_fee, uint256 total_ever_paid, uint256 time_due, bool paid){
+        return (renters[_tokenId][_renter].is_renter, renters[_tokenId][_renter].amount, renters[_tokenId][_renter].late_fee, renters[_tokenId][_renter].total_ever_paid, renters[_tokenId][_renter].time_due, renters[_tokenId][_renter].paid);
+    }
     function show_name(uint256 _tokenId) public constant returns(string){
         return name_t[_tokenId];
     }
