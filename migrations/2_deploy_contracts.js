@@ -10,6 +10,9 @@ module.exports = function(deployer) {
         return instance.setAssetContract(AssetToken.address);
       })});
     deployer.deploy(Rentings, DeclaToken.address, AssetToken.address).then( () => {
+      DeclaToken.deployed().then(function(instance){
+        instance.setRentingsContract(Rentings.address);
+      });
 	    return AssetToken.deployed().then(function(instance){
 		    instance.setRentingsContract(Rentings.address);
 	    }

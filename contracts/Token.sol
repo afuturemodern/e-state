@@ -616,6 +616,7 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
 
     address public icoContract;
     address public assetContract;
+    address public rentingsContract;
     using SafeMath for uint;
     mapping(address => uint256) LockedTokens;
     
@@ -744,6 +745,11 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
     function setAssetContract(address _assetContract) onlyOwner public{
         if (_assetContract != address(0)){
             assetContract = _assetContract;
+        }
+    }
+    function setRentingsContract(address _rentingsContract) onlyOwner public{
+        if (_rentingsContract != address(0)){
+            rentingsContract = _rentingsContract;
         }
     }
     function transferByContract(address _spender, address _recipient, uint256 _value) public returns (bool){
