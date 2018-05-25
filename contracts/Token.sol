@@ -245,76 +245,7 @@ contract AssetToken is ERC721, Ownable {
     mapping(uint256 => string) public ipfsHash;
     mapping(uint256 => string) public name_t;
     mapping(uint256 => string) public physaddr;
-    //renter data
-    struct lease_requester{
-        bool is_requester;
-        uint256 amount;
-        uint256 late_fee;
-    }
-    mapping(uint256 => mapping(address => lease_requester)) public lease_requesters;
-    function get_lease_requester(address _requester, uint256 _tokenId) public constant returns(bool is_requester, uint256 amount, uint256 late_fee){
-        return (lease_requesters[_tokenId][_requester].is_requester, lease_requesters[_tokenId][_requester].amount, lease_requesters[_tokenId][_requester].late_fee);
-    }
-    struct renter{
-        bool is_renter;
-        uint256 amount;
-        uint256 late_fee;
-        uint256 total_ever_paid;
-        uint256 time_due;
-        bool paid;
-    }
-    mapping(uint256 => mapping(address => renter)) public renters;
-    function get_renter(address _renter, uint256 _tokenId) public constant returns (bool _is_renter, uint256 amount, uint256 late_fee, uint256 total_ever_paid, uint256 time_due, bool paid){
-        return (renters[_tokenId][_renter].is_renter, renters[_tokenId][_renter].amount, renters[_tokenId][_renter].late_fee, renters[_tokenId][_renter].total_ever_paid, renters[_tokenId][_renter].time_due, renters[_tokenId][_renter].paid);
-    }
-//Community governance
-    struct community_member{
-        uint256 com_tok_balance;
-        bool is_member;
-        bool requested;
-    }
-    uint256 public community_number;
-    mapping(uint256 => mapping(address => community_member)) public communities;
-    mapping(uint256 => string) public community_names;
-    mapping(uint256 => string) public community_token_names;
-    mapping(uint256 =>mapping(uint256 => bool)) public community_properties;
-    mapping(uint256 => mapping(uint256 => string)) public community_propositions;
-    mapping(uint256 => uint256) public community_token_total;
-    mapping(uint256 => uint256) public community_member_number;
-    function createCommunity(string _name, string _token_name, uint256 _token_amount, uint256 _tokenId) public returns (bool){
-        require(balances[msg.sender] >=1);
-        require(tokenOwners[_tokenId] == msg.sender);
-        community_names[community_number] = _name;
-        community_token_names[community_number] = _token_name;
-        community_properties[community_number][_tokenId] = true;
-        community_member_number[community_number] = 1;
-        community_token_total[community_number] = _token_amount;
-        communities[community_number][msg.sender] = community_member(_token_amount, true, false);
-        return true;
-    }
-    function joinCommunity(uint256 community_id) public returns (bool){}
-    function vote_allow_in_community(uint256 community_id) public returns (bool){}
 
-    function createCommunityPropositionDem() public returns(bool){}
-    function createCommunityPropositionTok() public returns(bool){}
-    function voteCommunityPropositionTok() public returns(bool){}
-    function voteCommunityPropositionDem() public returns(bool){}
-
-//end of community governance
-//comment economy
-    struct comment{
-        uint256 upvotes;
-        uint256 downvotes;
-        bool good_enough;
-        address commenter;
-        string hash;
-    }
-    mapping(uint256 => comment[]) tokenComments;
-    function createComment() public returns (bool){}
-    function upvoteComment() public returns (bool){}
-    function downvoteComment() public returns (bool){}
-    function reward_commenter() public returns (bool){}
-    function comment_lookup() public returns (string hash){}
 
 //constant functions 
     function show_name(uint256 _tokenId) public constant returns(string){
@@ -401,71 +332,7 @@ contract AssetToken is ERC721, Ownable {
         require(msg.sender == tokenOwners[_tokenId]);
         rentToOwnAmount[_tokenId] = _rentToOwnAmount;
     }
-    function RequestLease(uint256 _tokenId, uint256 _price, uint256 _late_fee) public returns (bool){
-        require(rentable[_tokenId]);
-        lease_requesters[_tokenId][msg.sender] = lease_requester(true,_price, _late_fee);
-        return true;
-    }
-    function CancelLeaseRequest(uint256 _tokenId) public returns (bool){
-        require(rentable[_tokenId]);
-        lease_requesters[_tokenId][msg.sender] = lease_requester(false, 0, 0);
-        return true;
-    }
-    function RentTo(uint256 _tokenId, address _renter, uint256 _time_due) public returns(bool){
-        require(msg.sender == tokenOwners[_tokenId]);
-        require(rentable[_tokenId]);
-        require(lease_requesters[_tokenId][_renter].is_requester == true);
-        renters[_tokenId][_renter] = renter(true,lease_requesters[_tokenId][_renter].amount, lease_requesters[_tokenId][_renter].late_fee, 0, _time_due, false);
-        emit RentTo_(_tokenId, _renter, lease_requesters[_tokenId][_renter].amount);
-        return true;
-    }
-    function PayRent(uint256 _tokenId) public returns (bool){
-        require(rentable[_tokenId]);
-        require(renters[_tokenId][msg.sender].is_renter == true);
-        require(renters[_tokenId][msg.sender].paid == false);
-        address _seller = tokenOwners[_tokenId];
-        if(now < renters[_tokenId][msg.sender].time_due){
-            require(dec.balanceOf(msg.sender) >= renters[_tokenId][msg.sender].amount);
-            dec.transferByContract(msg.sender, tokenOwners[_tokenId], renters[_tokenId][msg.sender].amount);
-            renters[_tokenId][msg.sender].total_ever_paid = renters[_tokenId][msg.sender].total_ever_paid.add(renters[_tokenId][msg.sender].amount);
-            renters[_tokenId][msg.sender].paid = true;
-            emit PayRent_(_tokenId, msg.sender, renters[_tokenId][msg.sender].amount);
-            if(rentToOwnable[_tokenId]){
-                if(renters[_tokenId][msg.sender].total_ever_paid >= rentToOwnAmount[_tokenId]){
-                    tokenOwners[_tokenId] = msg.sender;
-                    balances[msg.sender] = balances[msg.sender].add(1);
-                    forSale[_tokenId] = false;
-                    rentToOwnable[_tokenId] = false;
-                    balances[_seller] = balances[_seller].sub(1);
-                    removeFromTokenList(_seller, _tokenId);
-                    addToTokenList(msg.sender, _tokenId);
-                    emit RentToOwnPossess(_tokenId, msg.sender);
-                    emit Transfer(_seller, msg.sender, _tokenId);
-                }
-            }
-        } else {
-            require(dec.balanceOf(msg.sender) >= renters[_tokenId][msg.sender].amount.add(renters[_tokenId][msg.sender].late_fee));
-            dec.transferByContract(msg.sender, tokenOwners[_tokenId], renters[_tokenId][msg.sender].amount.add(renters[_tokenId][msg.sender].late_fee));
-            renters[_tokenId][msg.sender].paid = true;
-            renters[_tokenId][msg.sender].total_ever_paid = renters[_tokenId][msg.sender].total_ever_paid.add(renters[_tokenId][msg.sender].amount.add(renters[_tokenId][msg.sender].late_fee));
-            emit PayRent_(_tokenId, msg.sender, renters[_tokenId][msg.sender].amount);
-            if(rentToOwnable[_tokenId]){
-                if(renters[_tokenId][msg.sender].total_ever_paid >= rentToOwnAmount[_tokenId]){
-                    tokenOwners[_tokenId] = msg.sender;
-                    balances[msg.sender] = balances[msg.sender].add(1);
-                    forSale[_tokenId] = false;
-                    rentToOwnable[_tokenId] = false;
-                    balances[_seller] = balances[_seller].sub(1);
-                    removeFromTokenList(_seller, _tokenId);
-                    addToTokenList(msg.sender, _tokenId);
-                    emit RentToOwnPossess(_tokenId, msg.sender);
-                    emit Transfer(_seller, msg.sender, _tokenId);
-                }
-            }
-        }
-
-    }
-
+    
     function MakeNonRentToOwnable(uint256 _tokenId) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         rentToOwnable[_tokenId] = false;
@@ -561,6 +428,149 @@ contract AssetToken is ERC721, Ownable {
     event CredLost(address _recipient);
     event AssetSale(address _buyer, address _seller, uint256 amount);
 
+}
+/*
+contract Rentings{
+        //renter data
+    
+    struct lease_requester{
+        bool is_requester;
+        uint256 amount;
+        uint256 late_fee;
+    }
+    mapping(uint256 => mapping(address => lease_requester)) public lease_requesters;
+    function get_lease_requester(address _requester, uint256 _tokenId) public constant returns(bool is_requester, uint256 amount, uint256 late_fee){
+        return (lease_requesters[_tokenId][_requester].is_requester, lease_requesters[_tokenId][_requester].amount, lease_requesters[_tokenId][_requester].late_fee);
+    }
+    struct renter{
+        bool is_renter;
+        uint256 amount;
+        uint256 late_fee;
+        uint256 total_ever_paid;
+        uint256 time_due;
+        bool paid;
+    }
+    mapping(uint256 => mapping(address => renter)) public renters;
+    /*function get_renter(address _renter, uint256 _tokenId) public constant returns (bool _is_renter, uint256 amount, uint256 late_fee, uint256 total_ever_paid, uint256 time_due, bool paid){
+        return (renters[_tokenId][_renter].is_renter, renters[_tokenId][_renter].amount, renters[_tokenId][_renter].late_fee, renters[_tokenId][_renter].total_ever_paid, renters[_tokenId][_renter].time_due, renters[_tokenId][_renter].paid);
+    }
+    function RequestLease(uint256 _tokenId, uint256 _price, uint256 _late_fee) public returns (bool){
+        require(rentable[_tokenId]);
+        lease_requesters[_tokenId][msg.sender] = lease_requester(true,_price, _late_fee);
+        return true;
+    }
+    function CancelLeaseRequest(uint256 _tokenId) public returns (bool){
+        require(rentable[_tokenId]);
+        lease_requesters[_tokenId][msg.sender] = lease_requester(false, 0, 0);
+        return true;
+    }
+    function RentTo(uint256 _tokenId, address _renter, uint256 _time_due) public returns(bool){
+        require(msg.sender == tokenOwners[_tokenId]);
+        require(rentable[_tokenId]);
+        require(lease_requesters[_tokenId][_renter].is_requester == true);
+        renters[_tokenId][_renter] = renter(true,lease_requesters[_tokenId][_renter].amount, lease_requesters[_tokenId][_renter].late_fee, 0, _time_due, false);
+        emit RentTo_(_tokenId, _renter, lease_requesters[_tokenId][_renter].amount);
+        return true;
+    }
+    function RentPossess(uint256 _tokenId, address _possessor) private {
+                    address _seller = tokenOwners[_tokenId];
+                    tokenOwners[_tokenId] = _possessor;
+                    balances[_possessor] = balances[_possessor].add(1);
+                    forSale[_tokenId] = false;
+                    rentToOwnable[_tokenId] = false;
+                    balances[_seller] = balances[_seller].sub(1);
+                    removeFromTokenList(_seller, _tokenId);
+                    addToTokenList(_possessor, _tokenId);
+                    emit RentToOwnPossess(_tokenId, _possessor);
+                    emit Transfer(_seller, _possessor, _tokenId);
+    }
+
+    function PayRent(uint256 _tokenId) public returns (bool){
+        require(rentable[_tokenId]);
+        require(renters[_tokenId][msg.sender].is_renter == true);
+        require(renters[_tokenId][msg.sender].paid == false);
+
+        if(now < renters[_tokenId][msg.sender].time_due){
+            require(dec.balanceOf(msg.sender) >= renters[_tokenId][msg.sender].amount);
+            dec.transferByContract(msg.sender, tokenOwners[_tokenId], renters[_tokenId][msg.sender].amount);
+            renters[_tokenId][msg.sender].paid = true;
+            renters[_tokenId][msg.sender].total_ever_paid = renters[_tokenId][msg.sender].total_ever_paid.add(renters[_tokenId][msg.sender].amount);
+            emit PayRent_(_tokenId, msg.sender, renters[_tokenId][msg.sender].amount);
+            if(rentToOwnable[_tokenId]){
+                if(renters[_tokenId][msg.sender].total_ever_paid >= rentToOwnAmount[_tokenId]){
+                    RentPossess(_tokenId, msg.sender);
+                }
+            }
+        } else {
+            uint256 total_fee = renters[_tokenId][msg.sender].late_fee.add(renters[_tokenId][msg.sender].amount);
+            require(dec.balanceOf(msg.sender) >= total_fee);
+            dec.transferByContract(msg.sender, tokenOwners[_tokenId], total_fee);
+            renters[_tokenId][msg.sender].total_ever_paid = renters[_tokenId][msg.sender].total_ever_paid.add(total_fee);
+            renters[_tokenId][msg.sender].paid = true;
+            emit PayRent_(_tokenId, msg.sender, renters[_tokenId][msg.sender].amount);
+            if(rentToOwnable[_tokenId]){
+                if(renters[_tokenId][msg.sender].total_ever_paid >= rentToOwnAmount[_tokenId]){
+                    RentPossess(_tokenId, msg.sender);
+                }
+            }
+        }
+    }
+}*/
+contract CommunityContract {
+//Community governance
+/*
+    struct community_member{
+        uint256 com_tok_balance;
+        bool is_member;
+        bool requested;
+    }
+    uint256 public community_number;
+    mapping(uint256 => mapping(address => community_member)) public communities;
+    mapping(uint256 => string) public community_names;
+    mapping(uint256 => string) public community_token_names;
+    mapping(uint256 =>mapping(uint256 => bool)) public community_properties;
+    mapping(uint256 => mapping(uint256 => string)) public community_propositions;
+    mapping(uint256 => uint256) public community_token_total;
+    mapping(uint256 => uint256) public community_member_number;
+    function createCommunity(string _name, string _token_name, uint256 _token_amount, uint256 _tokenId) public returns (bool){
+        require(balances[msg.sender] >=1);
+        require(tokenOwners[_tokenId] == msg.sender);
+        community_names[community_number] = _name;
+        community_token_names[community_number] = _token_name;
+        community_properties[community_number][_tokenId] = true;
+        community_member_number[community_number] = 1;
+        community_token_total[community_number] = _token_amount;
+        communities[community_number][msg.sender] = community_member(_token_amount, true, false);
+        return true;
+    }
+    function joinCommunity(uint256 community_id) public returns (bool){}
+    function vote_allow_in_community(uint256 community_id) public returns (bool){}
+
+    function createCommunityPropositionDem() public returns(bool){}
+    function createCommunityPropositionTok() public returns(bool){}
+    function voteCommunityPropositionTok() public returns(bool){}
+    function voteCommunityPropositionDem() public returns(bool){}
+*/
+//end of community governance
+
+}
+contract CommentEconomy {
+//comment economy
+/*
+    struct comment{
+        uint256 upvotes;
+        uint256 downvotes;
+        bool good_enough;
+        address commenter;
+        string hash;
+    }
+    mapping(uint256 => comment[]) tokenComments;
+    function createComment() public returns (bool){}
+    function upvoteComment() public returns (bool){}
+    function downvoteComment() public returns (bool){}
+    function reward_commenter() public returns (bool){}
+    function comment_lookup() public returns (string hash){}
+*/
 }
 contract Pausable is Ownable {
     event Pause();

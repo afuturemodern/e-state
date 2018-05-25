@@ -1,7 +1,7 @@
 {
-  "name": "truffle-init-webpack",
+  "name": "ulo",
   "version": "0.0.2",
-  "description": "Frontend example using truffle v3",
+  "description": "Property Decentralized Application",
   "scripts": {
     "lint": "eslint ./",
     "build": "webpack",
@@ -33,5 +33,15 @@
     "web3": "^0.20.0",
     "webpack": "^2.2.1",
     "webpack-dev-server": "^2.3.0"
+  },
+  "dependencies": {
+    "bootstrap": "^4.1.1",
+    "ipfs-api": "^21.0.0",
+    "jquery": "^3.3.1",
+    "node-sass": "^4.9.0",
+    "popper.js": "^1.14.3",
+    "postcss-loader": "^2.1.5",
+    "precss": "^3.1.2",
+    "sass-loader": "^7.0.1"
   }
 }
