@@ -271,6 +271,7 @@ contract AssetToken is ERC721, Ownable {
     struct community_member{
         uint256 com_tok_balance;
         bool is_member;
+        bool requested;
     }
     uint256 public community_number;
     mapping(uint256 => mapping(address => community_member)) public communities;
@@ -288,9 +289,12 @@ contract AssetToken is ERC721, Ownable {
         community_properties[community_number][_tokenId] = true;
         community_member_number[community_number] = 1;
         community_token_total[community_number] = _token_amount;
-        communities[community_number][msg.sender] = community_member(_token_amount, true);
+        communities[community_number][msg.sender] = community_member(_token_amount, true, false);
         return true;
     }
+    function joinCommunity(uint256 community_id) public returns (bool){}
+    function vote_allow_in_community(uint256 community_id) public returns (bool){}
+
     function createCommunityPropositionDem() public returns(bool){}
     function createCommunityPropositionTok() public returns(bool){}
     function voteCommunityPropositionTok() public returns(bool){}
