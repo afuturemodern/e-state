@@ -380,6 +380,8 @@ contract AssetToken is ERC721, Ownable {
     function ValidateAssetToken(uint256 _tokenId) internal{
         validated[_tokenId] = true;
         tokenValidations[tokenOwners[_tokenId]] = tokenValidations[tokenOwners[_tokenId]].add(1);
+        dec.unlock_by_contract(tokenOwners[_tokenId], reqd_erc223_amount.sub(2));
+        dec.transfer_locked_to_pot(tokenOwners[_tokenId], 2);
         if(tokenValidations[tokenOwners[_tokenId]] >= credThreshold){
             GrantCred(tokenOwners[_tokenId]);
         }
@@ -623,7 +625,7 @@ contract CommunityContract {
 
     }
 
-    function createCommunityPropositionDem() public returns(bool){}
+    function createCommunityPropositionDem(uint256 _community_id) public returns(bool){}
 /*    function createCommunityPropositionTok() public returns(bool){}
     function voteCommunityPropositionTok() public returns(bool){}
     function voteCommunityPropositionDem() public returns(bool){}
@@ -635,6 +637,7 @@ contract CommunityContract {
 
 }
 contract CommentEconomy {
+    using SafeMath for uint;
     AssetToken public asset;
     DeclaToken public dec;
     address public decAddress;
@@ -646,21 +649,58 @@ contract CommentEconomy {
         asset = AssetToken(_assetAddress);
     }
 //comment economy
-/*
+
     struct comment{
+
         uint256 upvotes;
         uint256 downvotes;
         bool good_enough;
+        bool paid;
         address commenter;
         string hash;
     }
     mapping(uint256 => comment[]) tokenComments;
-    function createComment() public returns (bool){}
-    function upvoteComment() public returns (bool){}
-    function downvoteComment() public returns (bool){}
-    function reward_commenter() public returns (bool){}
-    function comment_lookup() public returns (string hash){}
-*/
+    function createComment(uint _tokenId, string hash) public returns (bool){
+        tokenComments[_tokenId].push(comment(0,0,false, false,msg.sender, hash));
+    }
+
+    function upvoteComment(uint256 _tokenId, uint256 comment_number) public returns (bool){
+        tokenComments[_tokenId][comment_number].upvotes = tokenComments[_tokenId][comment_number].upvotes.add(1);
+        if(tokenComments[_tokenId][comment_number].upvotes >= 5 + tokenComments[_tokenId][comment_number].downvotes.mul(2) && tokenComments[_tokenId][comment_number].good_enough == false){
+            tokenComments[_tokenId][comment_number].good_enough = true;
+
+            //make payment if haven't already
+            if(tokenComments[_tokenId][comment_number].paid == false){
+                reward_commenter(_tokenId, comment_number);
+                return true;
+            }
+        }
+    }
+    function downvoteComment(uint256 _tokenId, uint256 comment_number) public returns (bool){
+        tokenComments[_tokenId][comment_number].downvotes = tokenComments[_tokenId][comment_number].downvotes.add(1);
+        if(tokenComments[_tokenId][comment_number].downvotes.mul(2) + 5 > tokenComments[_tokenId][comment_number].upvotes && tokenComments[_tokenId][comment_number].good_enough == true){
+            tokenComments[_tokenId][comment_number].good_enough = false;
+        }
+    }
+    function comment_lookup(uint256 _tokenId, uint256 comment_number) public constant returns (string hash){
+        return tokenComments[_tokenId][comment_number].hash;
+    }
+    function commentupvotes(uint256 _tokenId, uint256 comment_number) public constant returns (uint256){
+        return tokenComments[_tokenId][comment_number].upvotes;
+    }
+    function commentdownvores(uint256 _tokenId, uint256 comment_number) public constant returns (uint256){
+        return tokenComments[_tokenId][comment_number].downvotes;
+    }
+    function commentgoodenough(uint256 _tokenId, uint256 comment_number) public constant returns (bool){
+        return tokenComments[_tokenId][comment_number].good_enough;
+    }
+    function reward_commenter(uint256 _tokenId, uint256 comment_number) private returns (bool){
+        address commenter = tokenComments[_tokenId][comment_number].commenter;
+
+        return true;
+    }
+    
+
 }
 contract Pausable is Ownable {
     event Pause();
@@ -694,11 +734,13 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
     address public rentingsContract;
     address public communityContract;
     address public commentContract;
+    uint256 public reward_pot;
     using SafeMath for uint;
     mapping(address => uint256) LockedTokens;
     
     constructor() public {
         _balanceOf[msg.sender] = _totalSupply;
+        reward_pot = 0;
     }
     event Lock(address indexed locker, uint256 value);
     event Unlock(address indexed locker, uint256 value);
@@ -741,6 +783,13 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
         LockedTokens[_who] = LockedTokens[_who].sub(_value);
         _balanceOf[_who] = _balanceOf[_who].add(_value);
         emit Unlock(_who, _value);
+    }
+    function transfer_locked_to_pot(address _who, uint256 _value) public{
+        require(msg.sender == assetContract);
+        require(_value <= LockedTokens[_who]);
+        require(_value > 0);
+        LockedTokens[_who] = LockedTokens[_who].sub(_value);
+        reward_pot = reward_pot.add(_value);
     }
     function lock_by_contract(address _locker,uint256 _value) public {
         require(msg.sender == assetContract);
