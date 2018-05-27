@@ -432,6 +432,19 @@ contract AssetToken is ERC721, Ownable {
             commentContract = _commentContract;
         }
     }
+    function RentPossess(uint256 _tokenId, address _possessor) public {
+        require(msg.sender == rentingsContract);
+        address _seller = tokenOwners[_tokenId];
+        tokenOwners[_tokenId] = _possessor;
+        balances[_possessor] = balances[_possessor].add(1);
+        forSale[_tokenId] = false;
+        rentToOwnable[_tokenId] = false;
+        balances[_seller] = balances[_seller].sub(1);
+        removeFromTokenList(_seller, _tokenId);
+        addToTokenList(_possessor, _tokenId);
+        emit RentToOwnPossess(_tokenId, _possessor);
+        emit Transfer(_seller, _possessor, _tokenId);
+    }
     
     event ListToken(uint256 _tokenId, uint256 _price);
     event DeListToken(uint256 _tokenId, address _delister);
@@ -442,11 +455,13 @@ contract AssetToken is ERC721, Ownable {
     event CredGiven(address _recipient);
     event CredLost(address _recipient);
     event AssetSale(address _buyer, address _seller, uint256 amount);
-
+    event RentToOwnPossess(uint256 _tokenId, address _new_owner);
 }
 
 contract Rentings{
+    using SafeMath for uint;
         //renter data
+
     AssetToken public asset;
     DeclaToken public dec;
     address public decAddress;
@@ -495,53 +510,42 @@ contract Rentings{
         renters[_tokenId][_renter] = renter(true,lease_requesters[_tokenId][_renter].amount, lease_requesters[_tokenId][_renter].late_fee, 0, _time_due, false);
         emit RentTo_(_tokenId, _renter, lease_requesters[_tokenId][_renter].amount);
         return true;
-    }/*
-    function RentPossess(uint256 _tokenId, address _possessor) private {
-                    address _seller = tokenOwners[_tokenId];
-                    tokenOwners[_tokenId] = _possessor;
-                    balances[_possessor] = balances[_possessor].add(1);
-                    forSale[_tokenId] = false;
-                    rentToOwnable[_tokenId] = false;
-                    balances[_seller] = balances[_seller].sub(1);
-                    removeFromTokenList(_seller, _tokenId);
-                    addToTokenList(_possessor, _tokenId);
-                    emit RentToOwnPossess(_tokenId, _possessor);
-                    emit Transfer(_seller, _possessor, _tokenId);
-    }*/
-/*
+    }
+
+
     function PayRent(uint256 _tokenId) public returns (bool){
-        require(rentable[_tokenId]);
+        require(asset.rentable(_tokenId));
         require(renters[_tokenId][msg.sender].is_renter == true);
         require(renters[_tokenId][msg.sender].paid == false);
 
         if(now < renters[_tokenId][msg.sender].time_due){
             require(dec.balanceOf(msg.sender) >= renters[_tokenId][msg.sender].amount);
-            dec.transferByContract(msg.sender, tokenOwners[_tokenId], renters[_tokenId][msg.sender].amount);
+            dec.transferByContract(msg.sender, asset.tokenOwners(_tokenId), renters[_tokenId][msg.sender].amount);
             renters[_tokenId][msg.sender].paid = true;
             renters[_tokenId][msg.sender].total_ever_paid = renters[_tokenId][msg.sender].total_ever_paid.add(renters[_tokenId][msg.sender].amount);
             emit PayRent_(_tokenId, msg.sender, renters[_tokenId][msg.sender].amount);
-            if(rentToOwnable[_tokenId]){
-                if(renters[_tokenId][msg.sender].total_ever_paid >= rentToOwnAmount[_tokenId]){
-                    RentPossess(_tokenId, msg.sender);
+            if(asset.rentToOwnable(_tokenId)){
+                if(renters[_tokenId][msg.sender].total_ever_paid >= asset.rentToOwnAmount(_tokenId)){
+                    asset.RentPossess(_tokenId, msg.sender);
                 }
             }
         } else {
             uint256 total_fee = renters[_tokenId][msg.sender].late_fee.add(renters[_tokenId][msg.sender].amount);
             require(dec.balanceOf(msg.sender) >= total_fee);
-            dec.transferByContract(msg.sender, tokenOwners[_tokenId], total_fee);
+            dec.transferByContract(msg.sender, asset.tokenOwners(_tokenId), total_fee);
             renters[_tokenId][msg.sender].total_ever_paid = renters[_tokenId][msg.sender].total_ever_paid.add(total_fee);
             renters[_tokenId][msg.sender].paid = true;
             emit PayRent_(_tokenId, msg.sender, renters[_tokenId][msg.sender].amount);
-            if(rentToOwnable[_tokenId]){
-                if(renters[_tokenId][msg.sender].total_ever_paid >= rentToOwnAmount[_tokenId]){
-                    RentPossess(_tokenId, msg.sender);
+            if(asset.rentToOwnable(_tokenId)){
+                if(renters[_tokenId][msg.sender].total_ever_paid >= asset.rentToOwnAmount(_tokenId)){
+                    asset.RentPossess(_tokenId, msg.sender);
                 }
             }
         }
-    }*/
+    }
     event RentTo_(uint256 _tokenId, address _renter, uint256 amount);
     event PayRent_(uint256 _tokenId, address _renter, uint256 amount);
-    event RentToOwnPossess(uint256 _tokenId, address _new_owner);
+    
     
 }
 contract CommunityContract {
