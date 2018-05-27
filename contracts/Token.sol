@@ -222,6 +222,8 @@ contract AssetToken is ERC721, Ownable {
     }
     uint256 public post_reward;//TODO - make adjustable with voting by token holders
     address rentingsContract;
+    address communityContract;
+    address commentContract;
     mapping(uint256 => bool) public rentable;
     mapping(uint256 => bool) public rentToOwnable;
     mapping(uint256 => uint256) public rentToOwnAmount;
@@ -420,6 +422,17 @@ contract AssetToken is ERC721, Ownable {
             rentingsContract = _rentingsContract;
         }
     }
+    function setCommunityContract(address _communityContract) onlyOwner public{
+        if (_communityContract != address(0)){
+            communityContract = _communityContract;
+        }
+    }
+    function setCommentContract(address _commentContract) onlyOwner public{
+        if (_commentContract != address(0)){
+            commentContract = _commentContract;
+        }
+    }
+    
     event ListToken(uint256 _tokenId, uint256 _price);
     event DeListToken(uint256 _tokenId, address _delister);
     event CreateToken(address indexed _creator, uint256 _tokenId);
@@ -533,6 +546,16 @@ contract Rentings{
 }
 contract CommunityContract {
 //Community governance
+    AssetToken public asset;
+    DeclaToken public dec;
+    address public decAddress;
+    address public assetAddress;
+    constructor(address _decAddress, address _assetAddress) public{
+        decAddress = _decAddress;
+        dec = DeclaToken(decAddress);
+        assetAddress = _assetAddress;
+        asset = AssetToken(_assetAddress);
+    }
 /*
     struct community_member{
         uint256 com_tok_balance;
@@ -570,6 +593,16 @@ contract CommunityContract {
 
 }
 contract CommentEconomy {
+    AssetToken public asset;
+    DeclaToken public dec;
+    address public decAddress;
+    address public assetAddress;
+    constructor(address _decAddress, address _assetAddress) public{
+        decAddress = _decAddress;
+        dec = DeclaToken(decAddress);
+        assetAddress = _assetAddress;
+        asset = AssetToken(_assetAddress);
+    }
 //comment economy
 /*
     struct comment{
@@ -617,6 +650,8 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
     address public icoContract;
     address public assetContract;
     address public rentingsContract;
+    address public communityContract;
+    address public commentContract;
     using SafeMath for uint;
     mapping(address => uint256) LockedTokens;
     
@@ -750,6 +785,16 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
     function setRentingsContract(address _rentingsContract) onlyOwner public{
         if (_rentingsContract != address(0)){
             rentingsContract = _rentingsContract;
+        }
+    }
+    function setCommunityContract(address _communityContract) onlyOwner public{
+        if (_communityContract != address(0)){
+            communityContract = _communityContract;
+        }
+    }
+    function setCommentContract(address _commentContract) onlyOwner public{
+        if (_commentContract != address(0)){
+            commentContract = _commentContract;
         }
     }
     function transferByContract(address _spender, address _recipient, uint256 _value) public returns (bool){

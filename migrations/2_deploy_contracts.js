@@ -2,6 +2,8 @@ const DeclaToken = artifacts.require("DeclaToken");
 const IcoContract = artifacts.require("IcoContract");
 const AssetToken = artifacts.require("AssetToken");
 const Rentings = artifacts.require("Rentings");
+const CommunityContract = artifacts.require("CommunityContract");
+const CommentEconomy = artifacts.require("CommentEconomy");
 
 module.exports = function(deployer) {
   deployer.deploy(DeclaToken).then(() => {
@@ -17,6 +19,24 @@ module.exports = function(deployer) {
 		    instance.setRentingsContract(Rentings.address);
 	    }
 		);
+    });
+    deployer.deploy(CommunityContract, DeclaToken.address, AssetToken.address).then( () => {
+      DeclaToken.deployed().then(function(instance){
+        instance.setCommunityContract(CommunityContract.address);
+      });
+      return AssetToken.deployed().then(function(instance){
+        instance.setRentingsContract(CommunityContract.address);
+      }
+    );
+    });
+    deployer.deploy(CommentEconomy, DeclaToken.address, AssetToken.address).then( () => {
+      DeclaToken.deployed().then(function(instance){
+        instance.setCommentContract(CommentEconomy.address);
+      });
+      return AssetToken.deployed().then(function(instance){
+        instance.setCommentContract(CommentEconomy.address);
+      }
+    );
     });
     return deployer.deploy(
       IcoContract,
