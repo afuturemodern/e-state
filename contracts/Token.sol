@@ -229,8 +229,9 @@ contract AssetToken is ERC721, Ownable {
     mapping(uint256 => uint256) public rentToOwnAmount;
     mapping(address => bool) public hasCred;
     mapping(uint256 => uint256) public votesFor;
+    mapping(uint256 => mapping(address =>bool)) public voted_for;
     mapping (uint256 => uint256) public votesAgainst;
-    
+    mapping(uint256 => mapping(address =>bool)) public voted_against;
     mapping(uint256 => bool) public validated;
     mapping(uint256 => bool) public invalidated;
     mapping(uint256 => bool) public forSale;
@@ -355,12 +356,25 @@ contract AssetToken is ERC721, Ownable {
     //voting/validation
     function VoteAssetToken(uint256 _tokenId) public{//function to vote for validity of token/owner
         require(hasCred[msg.sender]);
+        require(!voted_for[_tokenId][msg.sender]);
         require(tokenExists[_tokenId]);
         votesFor[_tokenId] = votesFor[_tokenId].add(1);
+        voted_for[_tokenId][msg.sender] = true;
         if(votesFor[_tokenId] >= reqd_votes_amount){
             ValidateAssetToken(_tokenId);
         }
         emit VoteToken(_tokenId, msg.sender);
+
+    }
+    function VoteAgainstAssetToken(uint256 _tokenId) public{//function to vote for validity of token/owner
+        require(hasCred[msg.sender]);
+        require(!voted_against[_tokenId][msg.sender]);
+        require(tokenExists[_tokenId]);
+        votesAgainst[_tokenId] = votesAgainst[_tokenId].add(1);
+        voted_against[_tokenId][msg.sender] = true;
+        if(votesAgainst[_tokenId] >= reqd_votes_against){
+            ValidateAssetToken(_tokenId);
+        }
 
     }
     function ValidateAssetToken(uint256 _tokenId) internal{
@@ -550,6 +564,7 @@ contract Rentings{
 }
 contract CommunityContract {
 //Community governance
+    using SafeMath for uint;
     AssetToken public asset;
     DeclaToken public dec;
     address public decAddress;
@@ -565,33 +580,56 @@ contract CommunityContract {
         uint256 com_tok_balance;
         bool is_member;
         bool requested;
+        uint256 votes;
     }
     uint256 public community_number;
     mapping(uint256 => mapping(address => community_member)) public communities;
     mapping(uint256 => string) public community_names;
-    mapping(uint256 => string) public community_token_names;
+    mapping(uint256 => string) public community_token_name;
+    mapping(uint256 => string) public community_token_symbol;
     mapping(uint256 =>mapping(uint256 => bool)) public community_properties;
     mapping(uint256 => mapping(uint256 => string)) public community_propositions;
     mapping(uint256 => uint256) public community_token_total;
     mapping(uint256 => uint256) public community_member_number;
-    function createCommunity(string _name, string _token_name, uint256 _token_amount, uint256 _tokenId) public returns (bool){
+    mapping(uint256 => uint256) public votes_reqd;
+    mapping(uint256 => uint256) public toks_reqd;
+    function createCommunity(string _name, string _token_name, uint256 _token_amount, uint256 _tokenId, uint256 _votes_reqd, uint256 _toks_reqd) public returns (bool){
         require(asset.balances(msg.sender) >=1);
         require(asset.tokenOwners(_tokenId) == msg.sender);
         community_names[community_number] = _name;
-        community_token_names[community_number] = _token_name;
+        community_token_name[community_number] = _token_name;
         community_properties[community_number][_tokenId] = true;
         community_member_number[community_number] = 1;
         community_token_total[community_number] = _token_amount;
-        communities[community_number][msg.sender] = community_member(_token_amount, true, false);
+        votes_reqd[community_number] = _votes_reqd;
+        toks_reqd[community_number] = _toks_reqd;
+        communities[community_number][msg.sender] = community_member(_token_amount, true, false, 0);
         return true;
-    }/*
-    function joinCommunity(uint256 community_id) public returns (bool){}
-    function vote_allow_in_community(uint256 community_id) public returns (bool){}
+    }
+    function joinCommunity(uint256 _community_id) public returns (bool){
+        communities[_community_id][msg.sender].requested = true;
+    }
+    function vote_allow_in_community(uint256 _community_id, address _candidate_member) public returns (bool){
+        require(communities[_community_id][msg.sender].is_member == true);
+        communities[_community_id][_candidate_member].votes = communities[_community_id][_candidate_member].votes.add(1);
+        if(communities[_community_id][_candidate_member].votes >= votes_reqd[_community_id]){
+            communities[_community_id][_candidate_member].is_member = true;
+            community_member_number[_community_id] = community_member_number[_community_id].add(1);
+        } else if(communities[_community_id][msg.sender].com_tok_balance >= toks_reqd[_community_id]) {
+            communities[_community_id][_candidate_member].is_member = true;
+            community_member_number[_community_id] = community_member_number[_community_id].add(1);
+        }
+        return true;
+
+    }
 
     function createCommunityPropositionDem() public returns(bool){}
-    function createCommunityPropositionTok() public returns(bool){}
+/*    function createCommunityPropositionTok() public returns(bool){}
     function voteCommunityPropositionTok() public returns(bool){}
     function voteCommunityPropositionDem() public returns(bool){}
+    function comTokTransfer() public returns (bool){}
+    function comTokApprove() public returns (bool){}
+    function comTokTransferFrom() public returns (bool){}
 */
 //end of community governance
 
