@@ -625,13 +625,17 @@ contract CommunityContract {
 
     }
 
-    function createCommunityPropositionDem(uint256 _community_id) public returns(bool){}
+    function createCommunityPropositionDem(uint256 _community_id) public returns(bool){
+        
+        
+    }
 /*    function createCommunityPropositionTok() public returns(bool){}
     function voteCommunityPropositionTok() public returns(bool){}
     function voteCommunityPropositionDem() public returns(bool){}
     function comTokTransfer() public returns (bool){}
     function comTokApprove() public returns (bool){}
     function comTokTransferFrom() public returns (bool){}
+
 */
 //end of community governance
 
