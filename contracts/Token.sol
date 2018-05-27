@@ -560,7 +560,7 @@ contract CommunityContract {
         assetAddress = _assetAddress;
         asset = AssetToken(_assetAddress);
     }
-/*
+
     struct community_member{
         uint256 com_tok_balance;
         bool is_member;
@@ -575,8 +575,8 @@ contract CommunityContract {
     mapping(uint256 => uint256) public community_token_total;
     mapping(uint256 => uint256) public community_member_number;
     function createCommunity(string _name, string _token_name, uint256 _token_amount, uint256 _tokenId) public returns (bool){
-        require(balances[msg.sender] >=1);
-        require(tokenOwners[_tokenId] == msg.sender);
+        require(asset.balances(msg.sender) >=1);
+        require(asset.tokenOwners(_tokenId) == msg.sender);
         community_names[community_number] = _name;
         community_token_names[community_number] = _token_name;
         community_properties[community_number][_tokenId] = true;
@@ -584,7 +584,7 @@ contract CommunityContract {
         community_token_total[community_number] = _token_amount;
         communities[community_number][msg.sender] = community_member(_token_amount, true, false);
         return true;
-    }
+    }/*
     function joinCommunity(uint256 community_id) public returns (bool){}
     function vote_allow_in_community(uint256 community_id) public returns (bool){}
 
