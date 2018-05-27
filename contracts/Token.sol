@@ -672,9 +672,10 @@ contract CommentEconomy {
             //make payment if haven't already
             if(tokenComments[_tokenId][comment_number].paid == false){
                 reward_commenter(_tokenId, comment_number);
-                return true;
+                
             }
         }
+        return true;
     }
     function downvoteComment(uint256 _tokenId, uint256 comment_number) public returns (bool){
         tokenComments[_tokenId][comment_number].downvotes = tokenComments[_tokenId][comment_number].downvotes.add(1);
@@ -696,7 +697,8 @@ contract CommentEconomy {
     }
     function reward_commenter(uint256 _tokenId, uint256 comment_number) private returns (bool){
         address commenter = tokenComments[_tokenId][comment_number].commenter;
-
+        dec.transfer_reward(commenter);
+        tokenComments[_tokenId][comment_number].paid = true;
         return true;
     }
     
@@ -758,6 +760,14 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
       _;
     }
 
+    function transfer_reward(address _to) public{
+        require(msg.sender == commentContract);
+        uint256 _value = reward_pot;
+        _balanceOf[_to] = _balanceOf[_to].add(reward_pot);
+        reward_pot = 0;
+        emit Transfer(0x0, _to, _value);
+    }
+
     function transfer(address _to, uint _value) whenNotPaused onlyPayloadSize(2 * 32) external returns (bool) {
         if (_value > 0 &&
             _value <= _balanceOf[msg.sender] &&
@@ -790,6 +800,7 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
         require(_value > 0);
         LockedTokens[_who] = LockedTokens[_who].sub(_value);
         reward_pot = reward_pot.add(_value);
+        emit Transfer(_who, 0x0, _value);
     }
     function lock_by_contract(address _locker,uint256 _value) public {
         require(msg.sender == assetContract);
