@@ -754,7 +754,15 @@ contract CommunityContract {
             proposition_transfer_dem(_community_id, _prop_id, _receiver);
         }
     }
-
+    function community_proposition_show(uint256 _community_id, uint256 _prop_id) public constant returns (string){
+        return community_propositions[_community_id][_prop_id].hash;
+    }
+    function community_proposition_votes(uint256 _community_id, uint256 _prop_id) public constant returns (uint256){
+        return community_propositions[_community_id][_prop_id].votes;
+    }
+    function community_proposition_passed(uint256 _community_id, uint256 _prop_id) public constant returns (bool){
+        return community_propositions[_community_id][_prop_id].passed;
+    }
 
     event comTransfer(uint256 community_id, address sender, address receiver, uint256 value);
 //end of community governance

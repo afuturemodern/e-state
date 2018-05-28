@@ -9,8 +9,8 @@ import "../stylesheets/app.scss";
 // Import libraries we need.
 import { default as Web3} from 'web3';
 import { default as contract } from 'truffle-contract'
-import asset_artifacts from '../../build/contracts/AssetToken.json'
-var Asset = contract(asset_artifacts);
+import user_artifacts from '../../build/contracts/User.json'
+var User = contract(user_artifacts);
 
 // Import our contract artifacts and turn them into usable abstractions.
 
@@ -51,17 +51,17 @@ window.App = {
       account = accounts[0];
 
 //      self.refreshBalance();
-      Asset.setProvider(web3.currentProvider);
+      User.setProvider(web3.currentProvider);
 
       var ethAddressIput = $('#sign-up-eth-address').val(accounts[0]);
       var signUpButton = $('#sign-up-button').click(function() {
-	      //self.createUser();
+	      self.createUser();
 	      return false;
       });
-	//self.getUsers();
+	self.getUsers();
     });
   },
-	/*createUser: function(){
+	createUser: function(){
 		var username = $('#sign-up-username').val();
 		var title = $('#sign-up-title').val();
 		var intro = $('#sign-up-intro').val();
@@ -88,8 +88,8 @@ window.App = {
 			});
 		});
 		});
-	},*/
-	/*getAUser: function(instance, i) {
+	},
+	getAUser: function(instance, i) {
 		var instanceUsed = instance;
 		var username;
 		var ipfsHash;
@@ -126,8 +126,8 @@ console.log('address:', address = _address, i);
 console.log('error getting user #', i, ':', e);
 
 });
-	},*/
-/*getUsers: function() {
+	},
+getUsers: function() {
     var self = this;
 
 var instanceUsed;
@@ -188,7 +188,7 @@ self.getAUser(instanceUsed, i);
 
 });
 
-},*/
+},
 
 };
 
