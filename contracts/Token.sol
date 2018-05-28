@@ -245,7 +245,7 @@ contract AssetToken is ERC721, Ownable {
     uint256 reqd_votes_amount = 5;
     uint256 credThreshold = 5;
     uint256 reqd_votes_against = 200;
-    mapping(uint256 => string) public ipfsHash;
+    mapping(uint256 => string[]) public ipfsHash;
     mapping(uint256 => string) public name_t;
     mapping(uint256 => string) public physaddr;
 
@@ -257,8 +257,8 @@ contract AssetToken is ERC721, Ownable {
     function show_physaddr(uint256 _tokenId) public constant returns(string){
         return physaddr[_tokenId];
     }
-    function show_ipfsHash(uint256 _tokenId) public constant returns(string){
-        return ipfsHash[_tokenId];
+    function show_ipfsHash(uint256 _tokenId, uint256 _hashnum) public constant returns(string){
+        return ipfsHash[_tokenId][_hashnum];
     }
     function show_price(uint256 _tokenId) public constant returns (uint){
         return tokenPrice[_tokenId];
@@ -299,7 +299,7 @@ contract AssetToken is ERC721, Ownable {
     function UpdateTokenData(uint256 _tokenId, string _ipfsHash) public returns (bool){
         require(tokenOwners[_tokenId] == msg.sender);
         tokenLinks[_tokenId] = _ipfsHash;
-        ipfsHash[_tokenId] = _ipfsHash;
+        ipfsHash[_tokenId].push(_ipfsHash);
     }
     function ChangeName(uint256 _tokenId, string _name_t) public returns (bool){
         require(tokenOwners[_tokenId] == msg.sender);
@@ -758,7 +758,7 @@ contract CommunityContract {
         return community_propositions[_community_id][_prop_id].hash;
     }
     function community_proposition_votes(uint256 _community_id, uint256 _prop_id) public constant returns (uint256){
-        return community_propositions[_community_id][_prop_id].votes;
+        return community_propositions[_community_id][_prop_id].votes_for;
     }
     function community_proposition_passed(uint256 _community_id, uint256 _prop_id) public constant returns (bool){
         return community_propositions[_community_id][_prop_id].passed;
