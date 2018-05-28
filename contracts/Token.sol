@@ -595,6 +595,9 @@ contract CommunityContract {
         bool is_executive;
         bool requested;
         uint256 votes;
+        uint256 votes_ag;
+        uint256 votes_exec;
+        uint256 votes_ag_exec;
     }
     struct community_proposition{
         string hash;
@@ -603,6 +606,7 @@ contract CommunityContract {
         uint256 money;
         bool passed;
         bool executor_based;
+        bool spent;
     }
     uint256 public community_number;
     mapping(uint256 => mapping(address => community_member)) public communities;
@@ -615,6 +619,13 @@ contract CommunityContract {
     mapping(uint256 => uint256) public community_member_number;
     mapping(uint256 => uint256) public votes_reqd;
     mapping(uint256 => uint256) public toks_reqd;
+    mapping(uint256 => address[]) public executor_candidates;
+    mapping(uint256 => mapping(address => mapping(address => bool))) public voted_member;
+    mapping(uint256 => mapping(address => mapping(address => bool))) public voted_exec;
+    mapping(uint256 => mapping(address => mapping(address => bool))) public voted_ag_exec;
+    mapping(uint256 => mapping(address => mapping(uint256 => bool))) public voted_prop;
+    mapping(uint256 => mapping(address => mapping(uint256 => bool))) public voted_prop_transfer;
+    mapping(uint256 => mapping(uint256 => mapping(address => uint256))) public prop_transfer_votes;
     function createCommunity(string _name, string _token_name, uint256 _token_amount, uint256 _tokenId, uint256 _votes_reqd, uint256 _toks_reqd) public returns (bool){
         require(asset.balances(msg.sender) >=1);
         require(asset.tokenOwners(_tokenId) == msg.sender);
@@ -625,7 +636,7 @@ contract CommunityContract {
         community_token_total[community_number] = _token_amount;
         votes_reqd[community_number] = _votes_reqd;
         toks_reqd[community_number] = _toks_reqd;
-        communities[community_number][msg.sender] = community_member(_token_amount, true, false, false, 0);
+        communities[community_number][msg.sender] = community_member(_token_amount, true, false, false, 0, 0,0,0);
         return true;
     }
     function joinCommunity(uint256 _community_id) public returns (bool){
@@ -633,7 +644,9 @@ contract CommunityContract {
     }
     function vote_allow_in_community(uint256 _community_id, address _candidate_member) public returns (bool){
         require(communities[_community_id][msg.sender].is_member == true);
+        require(!voted_member[_community_id][msg.sender][_candidate_member]);
         communities[_community_id][_candidate_member].votes = communities[_community_id][_candidate_member].votes.add(1);
+        voted_member[_community_id][msg.sender][_candidate_member] = true;
         if(communities[_community_id][_candidate_member].votes >= votes_reqd[_community_id]){
             communities[_community_id][_candidate_member].is_member = true;
             community_member_number[_community_id] = community_member_number[_community_id].add(1);
@@ -644,15 +657,22 @@ contract CommunityContract {
         return true;
 
     }
-    function createCommunityProposition(uint256 _community_id, string _hash, uint256 _money) public returns(bool){
-        community_propositions[_community_id].push(community_proposition(_hash, 0,0,_money, false, false));
+    function createCommunityPropositionDem(uint256 _community_id, string _hash, uint256 _money) public returns(bool){
+        community_propositions[_community_id].push(community_proposition(_hash, 0,0,_money, false, false, false));
+        return true;
+    }
+    function createCommunityPropositionExec(uint256 _community_id, string _hash, uint256 _money) public returns(bool){
+        community_propositions[_community_id].push(community_proposition(_hash, 0,0,_money, false, true, false));
+        return true;
     }
     function comtokBalance(uint256 _community_id, address _addr) public constant returns (uint256){
         return communities[_community_id][_addr].com_tok_balance;
     }
     function voteforCommunityProposition(uint256 _community_id, uint256 _prop_id) public returns(bool){
         require(communities[_community_id][msg.sender].is_member == true);
+        require(!voted_prop[_community_id][msg.sender][_prop_id]);
         community_propositions[_community_id][_prop_id].votes_for = community_propositions[_community_id][_prop_id].votes_for.add(1);
+        voted_prop[_community_id][msg.sender][_prop_id] = true;
         if(community_propositions[_community_id][_prop_id].votes_for > community_member_number[_community_id].sub(community_propositions[_community_id][_prop_id].votes_for) ){
             community_propositions[_community_id][_prop_id].passed = true;
         }
@@ -678,15 +698,65 @@ contract CommunityContract {
         emit comTransfer(_community_id, msg.sender, _to, _value);
         return true;
     }
+    function electExecutor(uint256 _community_id, address _candidate) public returns (bool){
+        require(communities[_community_id][msg.sender].is_member == true);
+        require(communities[_community_id][_candidate].is_member == true);
+        executor_candidates[_community_id].push(_candidate);
+        return true;
+    }
+    function voteExecutor(uint256 _community_id, address _candidate) public returns (bool){
+        require(communities[_community_id][msg.sender].is_member == true);
+        require(!voted_exec[_community_id][msg.sender][_candidate]);
+        voted_exec[_community_id][msg.sender][_candidate] = true;
+        communities[_community_id][_candidate].votes_exec = communities[_community_id][_candidate].votes_exec.add(1);
+        if(communities[_community_id][_candidate].votes_exec > community_member_number[_community_id]){
+            communities[_community_id][_candidate].is_executive = true;
+        }
+        return true;
+    }
+    function voteAgainstExecutor(uint256 _community_id, address _candidate) public returns (bool){
+        require(communities[_community_id][msg.sender].is_member == true);
+        require(!voted_ag_exec[_community_id][msg.sender][_candidate]);
+        voted_ag_exec[_community_id][msg.sender][_candidate] = true;
+        communities[_community_id][_candidate].votes_ag_exec = communities[_community_id][_candidate].votes_ag_exec.add(1);
+        if(communities[_community_id][_candidate].votes_ag_exec > community_member_number[_community_id]){
+            communities[_community_id][_candidate].is_executive = false;
+        }
+        return true;
 
-/*    function createCommunityPropositionTok() public returns(bool){}
-    function voteCommunityPropositionTok() public returns(bool){}
-    
-    
-    
-    function comTokTransferFrom() public returns (bool){}
+    }
+    modifier onlyExecutor(uint256 _community_id){
+        require(communities[_community_id][msg.sender].is_executive == true);
+        _;
+    }
+    function proposition_transfer_exec(uint256 _community_id, uint256 _prop_id, address _receiver) onlyExecutor(_community_id) public returns(bool){
+        require(community_propositions[_community_id][_prop_id].passed == true);
+        require(community_propositions[_community_id][_prop_id].spent == false);
+        require(community_propositions[_community_id][_prop_id].executor_based == true);
+        communities[_community_id][_receiver].com_tok_balance = communities[_community_id][_receiver].com_tok_balance.add(community_propositions[_community_id][_prop_id].money);
+        community_propositions[_community_id][_prop_id].spent = true;
+        emit comTransfer(_community_id, 0x0, _receiver, community_propositions[_community_id][_prop_id].money);
+        return true;
+    }
+    function proposition_transfer_dem(uint256 _community_id, uint256 _prop_id, address _receiver) private returns (bool){
+        communities[_community_id][_receiver].com_tok_balance = communities[_community_id][_receiver].com_tok_balance.add(community_propositions[_community_id][_prop_id].money);
+        community_propositions[_community_id][_prop_id].spent = true;
+        emit comTransfer(_community_id, 0x0, _receiver, community_propositions[_community_id][_prop_id].money);
+    }
+    function vote_prop_transfer(uint256 _community_id, uint256 _prop_id, address _receiver) public returns (bool){
+        require(community_propositions[_community_id][_prop_id].passed == true);
+        require(community_propositions[_community_id][_prop_id].spent == false);
+        require(community_propositions[_community_id][_prop_id].executor_based == false);
+        require(!voted_prop_transfer[_community_id][msg.sender][_prop_id]);
+        voted_prop_transfer[_community_id][msg.sender][_prop_id] = true;
+        prop_transfer_votes[_community_id][_prop_id][_receiver] = prop_transfer_votes[_community_id][_prop_id][_receiver].add(1);
 
-*/
+        if(prop_transfer_votes[_community_id][_prop_id][_receiver] > community_member_number[_community_id]){
+            proposition_transfer_dem(_community_id, _prop_id, _receiver);
+        }
+    }
+
+
     event comTransfer(uint256 community_id, address sender, address receiver, uint256 value);
 //end of community governance
 
