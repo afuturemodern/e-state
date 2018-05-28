@@ -581,8 +581,17 @@ contract CommunityContract {
     struct community_member{
         uint256 com_tok_balance;
         bool is_member;
+        bool is_executive;
         bool requested;
         uint256 votes;
+    }
+    struct community_proposition{
+        string hash;
+        uint256 votes_for;
+        uint256 votes_against;
+        uint256 money;
+        bool passed;
+        bool executor_based;
     }
     uint256 public community_number;
     mapping(uint256 => mapping(address => community_member)) public communities;
@@ -590,7 +599,7 @@ contract CommunityContract {
     mapping(uint256 => string) public community_token_name;
     mapping(uint256 => string) public community_token_symbol;
     mapping(uint256 =>mapping(uint256 => bool)) public community_properties;
-    mapping(uint256 => mapping(uint256 => string)) public community_propositions;
+    mapping(uint256 => community_proposition[]) public community_propositions;
     mapping(uint256 => uint256) public community_token_total;
     mapping(uint256 => uint256) public community_member_number;
     mapping(uint256 => uint256) public votes_reqd;
@@ -605,7 +614,7 @@ contract CommunityContract {
         community_token_total[community_number] = _token_amount;
         votes_reqd[community_number] = _votes_reqd;
         toks_reqd[community_number] = _toks_reqd;
-        communities[community_number][msg.sender] = community_member(_token_amount, true, false, 0);
+        communities[community_number][msg.sender] = community_member(_token_amount, true, false, false, 0);
         return true;
     }
     function joinCommunity(uint256 _community_id) public returns (bool){
@@ -624,10 +633,11 @@ contract CommunityContract {
         return true;
 
     }
-
-    function createCommunityPropositionDem(uint256 _community_id) public returns(bool){
-        
-        
+    function createCommunityPropositionDem(uint256 _community_id, string _hash, uint256 _money) public returns(bool){
+        community_propositions[_community_id].push(community_proposition(_hash, 0,0,_money, false, false));
+    }
+    function comtokBalance(uint256 _community_id, address _addr) public constant returns (uint256){
+        return communities[_community_id][_addr].com_tok_balance;
     }
 /*    function createCommunityPropositionTok() public returns(bool){}
     function voteCommunityPropositionTok() public returns(bool){}
