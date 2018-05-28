@@ -578,6 +578,17 @@ contract CommunityContract {
         asset = AssetToken(_assetAddress);
     }
 
+    modifier onlyPayloadSize(uint size) {
+        require(msg.data.length >= size + 4) ;
+      _;
+    }
+    function isContract(address _addr) private constant returns (bool) {
+        uint codeSize;
+        assembly {
+            codeSize := extcodesize(_addr)
+        }
+        return codeSize > 0;
+    }
     struct community_member{
         uint256 com_tok_balance;
         bool is_member;
@@ -633,20 +644,50 @@ contract CommunityContract {
         return true;
 
     }
-    function createCommunityPropositionDem(uint256 _community_id, string _hash, uint256 _money) public returns(bool){
+    function createCommunityProposition(uint256 _community_id, string _hash, uint256 _money) public returns(bool){
         community_propositions[_community_id].push(community_proposition(_hash, 0,0,_money, false, false));
     }
     function comtokBalance(uint256 _community_id, address _addr) public constant returns (uint256){
         return communities[_community_id][_addr].com_tok_balance;
     }
+    function voteforCommunityProposition(uint256 _community_id, uint256 _prop_id) public returns(bool){
+        require(communities[_community_id][msg.sender].is_member == true);
+        community_propositions[_community_id][_prop_id].votes_for = community_propositions[_community_id][_prop_id].votes_for.add(1);
+        if(community_propositions[_community_id][_prop_id].votes_for > community_member_number[_community_id].sub(community_propositions[_community_id][_prop_id].votes_for) ){
+            community_propositions[_community_id][_prop_id].passed = true;
+        }
+        return true;
+    }
+    function comTokTransfer(uint256 _community_id,address _to, uint256 _value) public onlyPayloadSize(2 * 32) returns (bool){
+        require(communities[_community_id][msg.sender].com_tok_balance >= _value);
+        require(_value >= 0);
+        require(!isContract(_to));
+        communities[_community_id][msg.sender].com_tok_balance = communities[_community_id][msg.sender].com_tok_balance.sub(_value);
+        communities[_community_id][_to].com_tok_balance = communities[_community_id][_to].com_tok_balance.add(_value);
+        emit comTransfer(_community_id, msg.sender, _to, _value);
+        return true;
+    }
+    function comTokTransfer(uint256 _community_id,address _to, uint256 _value, bytes _data) public onlyPayloadSize(2 * 32) returns (bool){
+        require(communities[_community_id][msg.sender].com_tok_balance >= _value);
+        require(_value >= 0);
+        require(!isContract(_to));
+        communities[_community_id][msg.sender].com_tok_balance = communities[_community_id][msg.sender].com_tok_balance.sub(_value);
+        communities[_community_id][_to].com_tok_balance = communities[_community_id][_to].com_tok_balance.add(_value);
+        ERC223ReceivingContract _contract = ERC223ReceivingContract(_to);
+        _contract.tokenFallback(msg.sender, _value, _data);
+        emit comTransfer(_community_id, msg.sender, _to, _value);
+        return true;
+    }
+
 /*    function createCommunityPropositionTok() public returns(bool){}
     function voteCommunityPropositionTok() public returns(bool){}
-    function voteCommunityPropositionDem() public returns(bool){}
-    function comTokTransfer() public returns (bool){}
-    function comTokApprove() public returns (bool){}
+    
+    
+    
     function comTokTransferFrom() public returns (bool){}
 
 */
+    event comTransfer(uint256 community_id, address sender, address receiver, uint256 value);
 //end of community governance
 
 }
