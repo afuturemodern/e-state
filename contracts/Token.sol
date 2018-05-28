@@ -709,7 +709,7 @@ contract CommunityContract {
         require(!voted_exec[_community_id][msg.sender][_candidate]);
         voted_exec[_community_id][msg.sender][_candidate] = true;
         communities[_community_id][_candidate].votes_exec = communities[_community_id][_candidate].votes_exec.add(1);
-        if(communities[_community_id][_candidate].votes_exec > community_member_number[_community_id]){
+        if((communities[_community_id][_candidate].votes_exec > community_member_number[_community_id]) && ! (communities[_community_id][_candidate].votes_ag_exec > community_member_number[_community_id])){
             communities[_community_id][_candidate].is_executive = true;
         }
         return true;
@@ -723,7 +723,6 @@ contract CommunityContract {
             communities[_community_id][_candidate].is_executive = false;
         }
         return true;
-
     }
     modifier onlyExecutor(uint256 _community_id){
         require(communities[_community_id][msg.sender].is_executive == true);
