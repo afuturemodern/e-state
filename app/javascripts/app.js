@@ -10,7 +10,18 @@ import "../stylesheets/app.scss";
 import { default as Web3} from 'web3';
 import { default as contract } from 'truffle-contract'
 import asset_artifacts from '../../build/contracts/AssetToken.json'
+import token_artifacts from '../../build/contracts/DeclaToken.json'
+import rentings_artifacts from '../../build/contracts/Rentings.json'
+import community_artifacts from '../../build/contracts/CommunityContract.json'
+import comment_artifacts from '../../build/contracts/CommentEconomy.json'
 var Asset = contract(asset_artifacts);
+var Token = contract(token_artifacts);
+var Rentings = contract(rentings_artifacts);
+var Community = contract(community_artifacts);
+var Comment = contract(comment_artifacts);
+const IPFSUploader = require('ipfs-image-web-upload');
+
+
 
 // Import our contract artifacts and turn them into usable abstractions.
 
@@ -24,6 +35,9 @@ var account;
 
 const ipfsAPI = require('ipfs-api');
 const ipfs = ipfsAPI('localhost', '5001');
+
+var IPFS = require('ipfs');
+var uploader = new IPFSUploader(new IPFS());
 //const ipfs = ipfsAPI('infuria.io', '5001', {protocol: 'https'});
 window.App = {
   start: function() {
@@ -46,21 +60,64 @@ window.App = {
         alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
         return;
       }
+      Asset.setProvider(web3.currentProvider);
+      Token.setProvider(web3.currentProvider);
+      Rentings.setProvider(web3.currentProvider);
+      Community.setProvider(web3.currentProvider);
+      Comment.setProvider(web3.currentProvider);
 
       accounts = accs;
       account = accounts[0];
+      var bal;
+      Token.deployed().then(function(instance){
+        instance.balanceOf.call(accounts[0]).then(function(balance){
+          bal = balance.toNumber()/1000000000000000000;
+          $('#balance').val(bal);
+        });
+      });
 
 //      self.refreshBalance();
-      Asset.setProvider(web3.currentProvider);
+
 
       var ethAddressIput = $('#sign-up-eth-address').val(accounts[0]);
-      var signUpButton = $('#sign-up-button').click(function() {
-	      //self.createUser();
+      var signUpButton = $('#create-asset-button').click(function() {
+	      self.createAsset();
 	      return false;
       });
 	//self.getUsers();
     });
   },
+  createAsset: function(){
+    var name = $('#asset_name').val();
+    var physaddr = $('#phys_addr').val();
+    var description = $('#desc').val();
+    var pic_input = document.getElementById("pic_input");
+    //var file_input = document.getElementById("file_input");
+    var ipfsHash = '';
+    //var imghash = uploader.uploadBlob(pic_input.target.files[0]);
+    var assetJson = {name: name, physaddr: physaddr, description: description};
+    ipfs.add([Buffer.from(JSON.stringify(assetJson))], function(err, res){
+      if (err) throw err
+      ipfsHash = res[0].hash; 
+      console.log("ipfs hash is: "+ipfsHash);
+      Asset.deployed().then(function(instance){
+        console.log("creating asset token",name, physaddr, ipfsHash);
+        instance.CreateAssetToken(name, physaddr, ipfsHash, {from: accounts[0]}).then(function(success){
+          if(success){
+            console.log('created asset token');
+          } else {
+            console.log('error')
+          }
+        }).catch(function(e){
+          console.log(e);
+        });
+        
+        
+
+      })
+    });
+  },
+
 	/*createUser: function(){
 		var username = $('#sign-up-username').val();
 		var title = $('#sign-up-title').val();

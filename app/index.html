@@ -36,31 +36,41 @@
 <form>
 
 <div class="card-body">
- <h5 class="card-title">Create your profile</h5>
-
+ <h5 class="card-title">Create an asset</h5>
+ <p>Cost is 10 tokens</p>
 <div class="form-group">
-	<label for="username">Username</label><br />
- <input type="text" class="form-control" id="sign-up-username" required="required">
+	<label for="name">Name</label><br />
+ <input type="text" class="form-control" id="asset_name" required="required">
  </div>
 
-<div class="form-group">
-	<label for="username">Title</label><br />
- <input type="text" class="form-control" id="sign-up-title">
- </div>
+
  
  <div class="form-group">
-	 <label for="username">Short intro</label><br />
- <textarea class="form-control" id="sign-up-intro" rows="2"></textarea>
+	 <label for="username">Physical Address</label><br />
+ <textarea class="form-control" id="phys_addr" rows="2"></textarea>
+ </div>
+  <div class="form-group">
+	 <label for="username">Description</label><br />
+ <textarea class="form-control" id="desc" rows="2"></textarea>
+ </div>
+  <!--<div class="form-group">
+	<label for="username">Picture</label><br />
+	<input type="file" id="pic_input">
+</div>-->
+ <div class="form-group">
+	<label for="username">Balance</label><br />
+ <input type="text" class="form-control" id="balance" value="0" disabled>
  </div>
 
 <p>
+
 ETH Address:<br />
  <span class="eth-address"></span>
  <input type="text" class="form-control" id="sign-up-eth-address" value="0x…" disabled>
  </p>
  </p>
 
-<button type="button" class="btn btn-primary" id="sign-up-button">Sign Up</button> 
+<button type="button" class="btn btn-primary" id="create-asset-button">Create Asset</button> 
  </div>
 
 </form>

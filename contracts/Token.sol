@@ -241,7 +241,7 @@ contract AssetToken is ERC721, Ownable {
     //todo make rent to own functionality and decentralized autonomous governance
 
 
-    uint256 reqd_erc223_amount = 10;
+    uint256 reqd_erc223_amount = 10000000000000000000;
     uint256 reqd_votes_amount = 5;
     uint256 credThreshold = 5;
     uint256 reqd_votes_against = 200;
@@ -285,14 +285,15 @@ contract AssetToken is ERC721, Ownable {
     function CreateAssetToken(string _name_t, string _physaddr, string _link) public returns (bool){
         require(dec.balanceOf(msg.sender) > reqd_erc223_amount);
         dec.lock_by_contract(msg.sender, reqd_erc223_amount);
-        __totalSupply.add(1);
+        __totalSupply = __totalSupply.add(1);
         addToTokenList(msg.sender, __totalSupply.sub(1));
-        balances[owner].add(1);
+        balances[owner] = balances[owner].add(1);
         tokenOwners[__totalSupply.sub(1)] = msg.sender;
         tokenExists[__totalSupply.sub(1)] = true;
         name_t[__totalSupply.sub(1)] = _name_t;
         physaddr[__totalSupply.sub(1)] = _physaddr;
         tokenLinks[__totalSupply.sub(1)] = _link;
+        ipfsHash[__totalSupply.sub(1)].push(_link);
         emit CreateToken(msg.sender, __totalSupply.sub(1));
         return true;
     }
@@ -380,8 +381,8 @@ contract AssetToken is ERC721, Ownable {
     function ValidateAssetToken(uint256 _tokenId) internal{
         validated[_tokenId] = true;
         tokenValidations[tokenOwners[_tokenId]] = tokenValidations[tokenOwners[_tokenId]].add(1);
-        dec.unlock_by_contract(tokenOwners[_tokenId], reqd_erc223_amount.sub(2));
-        dec.transfer_locked_to_pot(tokenOwners[_tokenId], 2);
+        dec.unlock_by_contract(tokenOwners[_tokenId], reqd_erc223_amount.sub(2000000000000000000));
+        dec.transfer_locked_to_pot(tokenOwners[_tokenId], 2000000000000000000);
         if(tokenValidations[tokenOwners[_tokenId]] >= credThreshold){
             GrantCred(tokenOwners[_tokenId]);
         }
