@@ -100,6 +100,8 @@ window.App = {
       });
 
 //      self.refreshBalance();
+      self.getAssets();
+
 
 
       var ethAddressIput = $('#sign-up-eth-address').val(accounts[0]);
@@ -107,8 +109,102 @@ window.App = {
 	      self.createAsset();
 	      return false;
       });
-	    self.getAssets();
+      $(document).ready(function(){
+      var editNameButton = $('.edit-name-button').click(function(){
+        console.log('edit name clicked');
+        var data = $.parseJSON($(this).attr('data-button'));
+        self.editName(data.option1);
+      });
+      var editPhysaddrButton = $('.edit-physaddr-button').click(function(){
+        console.log('edit physaddr clicked');
+      });
+      var editDescButton = $('.add-desc-button').click(function(){
+
+      });
+      var addPicButton = $('.add-pic-button').click(function(){
+
+      });
+      var addVidButton = $('.add-vid-button').click(function(){
+
+      });
+      var addFileButton = $('.add-file-button').click(function(){
+
+      });
+      });
+	    
     });
+  },
+  editName: function(x){
+    var newName = $('#asset_name'+x).val();
+    console.log("editing name");
+    Asset.deployed().then(function(instance){
+      instance.ChangeName(x, newName, {from: accounts[0]}).then(function(success){
+        if(success){
+            console.log('Successfully edited name');
+          } else {
+            console.log('error')
+          }
+      }).catch(function(e){
+        console.log(e);
+      });
+    });
+  },
+  editPhysaddr: function(x){
+    var newPhysaddr = $('#phys_addr'+x).val();
+    console.log("editing physical address");
+    Asset.deployed().then(function(instance){
+      instance.ChangePhysAddr(x, newPhysaddr, {from: accounts[0]}).then(function(success){
+        if(success){
+            console.log('Successfully edited physical address');
+          } else {
+            console.log('error')
+          }
+      }).catch(function(e){
+        console.log(e);
+      });
+    });
+  },
+  editDescription: function(x){
+    console.log("editing description");
+    var newDesc = $('#desc'+x).val();
+    var instance;
+    Asset.deployed().then(function(g){
+      instance = g;
+      return instance.tokenMetadata.call(x);
+    }).then(function(metadata){
+      var url = "http://localhost:8080/ipfs/"+metadata;
+      return $.getJSON(url, function(assetJson) {
+        console.log('gotassetinfo from ipfs', assetJson);
+        return assetJson;
+      });
+    }).then(function(assetJson){
+      assetJson.description = newDesc;
+      var ipfsHash = '';
+      ipfs.add([Buffer.from(JSON.stringify(assetJson))], function(err, res){
+        if (err) throw err
+        ipfsHash = res[0].hash; 
+        console.log("ipfs hash is: "+ipfsHash);
+        instance.UpdateTokenData(x, ipfsHash, {from: accounts[0]}).then(function(success){
+          if(success){
+            console.log('Successfully edited description');
+          } else {
+            console.log('error')
+          }
+        }).catch(function(e){
+          console.log(e);
+        });
+      });
+    });
+/*
+return instanceUsed.tokenMetadata.call(i);
+    }).then(function(metadata){
+      var url = "http://localhost:8080/ipfs/"+metadata;
+      console.log('getting asset info from', url);
+      $.getJSON(url, function(assetJson) {
+        console.log('gotassetinfo from ipfs', assetJson);
+        $('#' + assetCardId).find('.card-text').text(assetJson.description);
+
+*/
   },
   createAsset: function(){
     var name = $('#asset_name').val();
@@ -230,7 +326,24 @@ window.App = {
         </button>
       </div>
       <div class="modal-body">
-        Blah Blah edit
+
+      <div class="form-group">
+      <label for="name">Edit Name</label><br />
+      <input type="text" class="form-control" id="asset_name`+i+`" >
+      <button type="button" class="edit-name-button btn btn-warning" data-button="`+i+`" onclick="window.App.editName(`+i+`)">Edit</button> 
+      </div>
+
+      <div class="form-group">
+      <label for="name">Physical Address</label><br />
+      <input type="text" class="form-control" id="phys_addr`+i+`" >
+      <button type="button" class="btn btn-warning edit-physaddr-button" onclick="window.App.editPhysaddr(`+i+`)">Edit</button>
+      </div>
+
+       <div class="form-group">
+      <label for="username">Edit Description</label><br />
+      <textarea class="form-control" id="desc`+i+`" rows="2"></textarea>
+      <button type="button" class="btn btn-warning add-desc-button" onclick="window.App.editDescription(`+i+`)">Edit</button>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
