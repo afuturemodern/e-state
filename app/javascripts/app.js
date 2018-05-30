@@ -35,9 +35,32 @@ var account;
 
 const ipfsAPI = require('ipfs-api');
 const ipfs = ipfsAPI('localhost', '5001');
+const OrbitDB = require('orbit-db');
+
+const ipfsOptions = {
+  EXPERIMENTAL: {
+    pubsub: true
+  },
+};
 
 var IPFS = require('ipfs');
 var uploader = new IPFSUploader(new IPFS());
+const ipfs2 = new IPFS(ipfsOptions);
+/*
+ipfs2.on('ready', async () => {
+  const orbitdb = new OrbitDB(ipfs2);
+  const access ={
+    write: ['*'],
+  }
+  const db = await orbitdb.log('ulo-database', access);
+  const test_hash = await db.add('hello world');
+  const latest = db.iterator({limit: 5}).collect();
+
+  console.log(JSON.stringify(latest, null, 2));
+  
+})*/
+
+
 //const ipfs = ipfsAPI('infuria.io', '5001', {protocol: 'https'});
 window.App = {
   start: function() {
@@ -84,7 +107,7 @@ window.App = {
 	      self.createAsset();
 	      return false;
       });
-	//self.getUsers();
+	    self.getAssets();
     });
   },
   createAsset: function(){
@@ -116,6 +139,84 @@ window.App = {
 
       })
     });
+  },
+  getAnAsset: function(instance, i){
+    var instanceUsed = instance;
+    var name;
+    var ipfsHash;
+    var physaddr;
+    var assetCardId = 'asset-card-'+i;
+    return instanceUsed.name_t.call(i).then(function(name){
+      console.log('name: ', name);
+      $('#'+assetCardId).find('.card-title').text(name);
+      return instanceUsed.physaddr.call(i);
+    }).then(function(physaddr){
+      console.log(physaddr);
+      $('#'+assetCardId).find('.card-subtitle').text(physaddr);
+      return instanceUsed.validated.call(i);
+    }).then(function(validated){
+      console.log(validated);
+      return instanceUsed.tokenMetadata.call(i);
+    }).then(function(metadata){
+      var url = "http://localhost:8080/ipfs/"+metadata;
+      console.log('getting asset info from', url);
+      $.getJSON(url, function(assetJson) {
+        console.log('gotassetinfo from ipfs', assetJson);
+        $('#' + assetCardId).find('.card-text').text(assetJson.description);
+        //$('#'+assetCardId).find('.card-text').text(userJson.intro);
+      });
+      return instanceUsed.tokenOwners.call(i);
+    }).then(function(address){
+      console.log('owner address ', address);
+      $('#'+assetCardId).find('card-eth-address').text(address);
+      return true;
+    }).catch(function(e){
+      console.log('error getting asset #', i, ':', e);
+    });
+  },
+  getAssets: function(){
+    var self = this;
+    var instanceUsed;
+    Asset.deployed().then(function(contractInstance){
+      instanceUsed = contractInstance;
+      return instanceUsed.totalSupply.call();
+    }).then(function(assetCount){
+      assetCount = assetCount.toNumber();
+      console.log('Asset Count', assetCount);
+      var rowCount = 0;
+      var assetsDiv = $('#assets-div');
+      var currentRow;
+      for (var i = 0; i < assetCount; i++){
+        var assetCardId = "asset-card-"+i;
+        if(i%4 == 0){
+          var currentRowId = 'user-row-'+ rowCount;
+          var assetRowTemplate = '<div class="row" id="'+currentRowId +  '"></div>';
+          assetsDiv.append(assetRowTemplate);
+          currentRow = $('#'+currentRowId);
+          rowCount++;
+        }
+        var assetTemplate = `
+        <div class="col-lg-3 mt-1 mb-1" id="` +assetCardId+`">
+        <div class="card bg-gradient-primary text-white card-profile p-1">
+              <div class="card-body">
+                <h5 class="card-title"></h5>
+                <h6 class="card-subtitle mb-2"></h6>
+                <p class="card-text"></p>        
+                <p class="eth-address m-0 p-0">
+                  <span class="card-eth-address"></span>
+                </p>
+              </div>
+            </div>
+        </div>`;
+        currentRow.append(assetTemplate);
+
+      }
+        console.log("getting assets...");
+        for(var i = 0; i < assetCount; i++){
+          self.getAnAsset(instanceUsed, i);
+        }
+    });
+
   },
 
 	/*createUser: function(){
