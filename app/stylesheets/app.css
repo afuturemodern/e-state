@@ -50,3 +50,6 @@ h3 {
 .hint {
   color: #666;
 }
+.edit-button{
+  display: none;
+}

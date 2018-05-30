@@ -168,7 +168,17 @@ window.App = {
       return instanceUsed.tokenOwners.call(i);
     }).then(function(address){
       console.log('owner address ', address);
-      $('#'+assetCardId).find('card-eth-address').text(address);
+      $('#'+assetCardId).find('.card-eth-address').text(address);
+      $(document).ready(function(){
+      if(address == accounts[0]){
+        console.log('same address');
+        if($('#'+assetCardId).find('.edit-button').is(":visible")){
+          $('#'+assetCardId).find('.edit-button').hide();
+        } else {
+          $('#'+assetCardId).find('.edit-button').show();
+        }
+      }
+      });
       return true;
     }).catch(function(e){
       console.log('error getting asset #', i, ':', e);
@@ -205,6 +215,7 @@ window.App = {
                 <p class="eth-address m-0 p-0">
                   <span class="card-eth-address"></span>
                 </p>
+                <button type="button" class="btn btn-success edit-button" onclick="alert('yeet')">Edit</button>
               </div>
             </div>
         </div>`;
