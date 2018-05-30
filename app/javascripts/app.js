@@ -215,10 +215,34 @@ window.App = {
                 <p class="eth-address m-0 p-0">
                   <span class="card-eth-address"></span>
                 </p>
-                <button type="button" class="btn btn-success edit-button" onclick="alert('yeet')">Edit</button>
+                <button type="button" class="btn btn-success edit-button" data-toggle="modal" data-target="#edit-modal`+assetCardId+`">Edit</button>
               </div>
             </div>
-        </div>`;
+        </div>
+
+<div class="modal fade" id="edit-modal`+assetCardId+`" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Edit Asset #` + i +`</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Blah Blah edit
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+        `;
         currentRow.append(assetTemplate);
 
       }
