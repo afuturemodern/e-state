@@ -16,5 +16,5 @@ tions using javascript.
 
 ##### Unit Testing (not implemented yet)
 To test using unit tests, run `truffle test tests/mytest.js`
-##### Browser Testing (not ready yet)
+##### Browser Testing 
 To test in the browser run `npm run dev`, and make sure you have [Metamask installed](https://metamask.io/) and you're [configured to use Ganache's Testnet](http://truffleframework.com/docs/advanced/truffle-with-metamask)
