@@ -473,6 +473,20 @@ return instanceUsed.tokenMetadata.call(i);
           $('#'+assetCardId).find('.edit-button').show();
         }
       }
+      instanceUsed.hasCred.call(accounts[0]).then(function(isvalidator){
+        if(isvalidator){
+          instanceUsed.show_validated(i).then(function(valid){
+            if(!valid){
+              if($('#'+assetCardId).find('.validate-button').is(":visible")){
+              $('#'+assetCardId).find('.validate-button').hide();
+              } else {
+              $('#'+assetCardId).find('.validate-button').show();
+              }
+            }
+          })
+        }
+      });
+
       });
       return true;
     }).catch(function(e){
@@ -515,6 +529,7 @@ return instanceUsed.tokenMetadata.call(i);
                 </p>
                 <button type="button" class="btn btn-success edit-button" data-toggle="modal" data-target="#edit-modal`+assetCardId+`">Edit</button>
                 <button type="button" class="btn btn-danger show-button" data-toggle="modal" data-target="#show-modal`+assetCardId+`" onclick="window.App.loadShow(`+i+`); this.onclick=null;">Show More</button>
+                <button type="button" class="btn btn-success validate-button" style="display: none">Validate</button>
               </div>
             </div>
         </div>
