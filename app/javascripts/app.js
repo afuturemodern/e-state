@@ -389,7 +389,15 @@ return instanceUsed.tokenMetadata.call(i);
       var picsdiv = $('#photos-div'+x);
       for(var i=0; i< pics.length; i++) {
         console.log(pics[i]["pic"]);
-        var pictemplate = `<img src="http://localhost:8080/ipfs/`+pics[i]["pic"]+`" height="80px">`;
+        if(i==0){
+          var pictemplate = `<div class="carousel-item active">
+          <img class="d-block w-100" src="http://localhost:8080/ipfs/`+pics[i]["pic"]+`" height="200px">
+          </div>`;
+        } else {
+          var pictemplate = `<div class="carousel-item">
+          <img class="d-block w-100" src="http://localhost:8080/ipfs/`+pics[i]["pic"]+`" height="200px">
+          </div>`;
+        }
         picsdiv.append(pictemplate);
       }
 
@@ -397,9 +405,21 @@ return instanceUsed.tokenMetadata.call(i);
       var vidsdiv = $('#vids-div'+x);
       for(var i = 0; i <vids.length; i++){
         console.log(vids[i]["vid"]);
-        var vidtemplate = `<video width="320" height="240" controls>
-        <source src="http://localhost/8080/ipfs/`+vids[i]["vid"]+`" type="video/mp4">
-        </video>`;
+        if(i==0){
+        var vidtemplate = `
+          <div class="carousel-item active">
+          <video width="320" height="240" controls>
+          <source src="http://localhost/8080/ipfs/`+vids[i]["vid"]+`" type="video/mp4">
+          </video>
+          </div>`;
+        } else {
+          var vidtemplate = `
+          <div class="carousel-item">
+          <video width="320" height="240" controls>
+          <source src="http://localhost/8080/ipfs/`+vids[i]["vid"]+`" type="video/mp4">
+          </video>
+          </div>`;
+        }
         vidsdiv.append(vidtemplate);
       }
       var files = assetJson.files;
@@ -562,9 +582,42 @@ return instanceUsed.tokenMetadata.call(i);
       <div id="history-div`+i+`"></div>
 
       <h3>Photos</h3>
-      <div id="photos-div`+i+`"></div>
+      <div id="carouselExampleControlsPic" class="carousel slide" data-ride="carousel">
+  <div class="carousel-inner" id="photos-div`+i+`">
+
+
+  </div>
+  <a class="carousel-control-prev" href="#carouselExampleControlsPic" role="button" data-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="sr-only">Previous</span>
+  </a>
+  <a class="carousel-control-next" href="#carouselExampleControlsPic" role="button" data-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="sr-only">Next</span>
+  </a>
+  </div>
+
+      
       <h3>Videos</h3>
-      <div id="vids-div`+i+`"></div>
+      <div id="carouselExampleControlsvid" class="carousel slide" data-ride="carousel">
+      <div class="carousel-inner" id="vids-div`+i+`">
+
+
+
+      </div>
+
+  <a class="carousel-control-prev" href="#carouselExampleControlsvid" role="button" data-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="sr-only">Previous</span>
+  </a>
+  <a class="carousel-control-next" href="#carouselExampleControlsvid" role="button" data-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="sr-only">Next</span>
+  </a>
+
+      </div>
+
+    
       <h3>Files</h3>
       <div id="files-div`+i+`"></div>
 
