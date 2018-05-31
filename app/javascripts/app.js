@@ -488,7 +488,7 @@ return instanceUsed.tokenMetadata.call(i);
                   <span class="card-eth-address"></span>
                 </p>
                 <p class="card-validated">
-                Verified <i class="fa fa-pencil"></i>
+                Verified <i class="fa fa-check-circle"></i>
                 </p>
                 <button type="button" class="btn btn-success edit-button" data-toggle="modal" data-target="#edit-modal`+assetCardId+`">Edit</button>
                 <button type="button" class="btn btn-danger show-button" data-toggle="modal" data-target="#show-modal`+assetCardId+`" onclick="window.App.loadShow(`+i+`); this.onclick=null;">Show More</button>
