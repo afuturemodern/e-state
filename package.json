@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "bootstrap": "^4.1.1",
+    "buffer": "^5.1.0",
     "ipfs": "^0.28.2",
     "ipfs-api": "^21.0.0",
     "ipfs-image-web-upload": "^1.0.5",

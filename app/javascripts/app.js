@@ -19,6 +19,7 @@ var Token = contract(token_artifacts);
 var Rentings = contract(rentings_artifacts);
 var Community = contract(community_artifacts);
 var Comment = contract(comment_artifacts);
+var buffer = require('buffer');
 const IPFSUploader = require('ipfs-image-web-upload');
 
 
@@ -206,6 +207,144 @@ return instanceUsed.tokenMetadata.call(i);
 
 */
   },
+  uploadPic: function(x){
+    var reader = new FileReader();
+    console.log("adding photo");
+    var instance;
+    Asset.deployed().then(function(g){
+      instance = g;
+      return instance.tokenMetadata.call(x);
+    }).then(function(metadata){
+      var url = "http://localhost:8080/ipfs/"+metadata;
+      return $.getJSON(url, function(assetJson) {
+        console.log('gotassetinfo from ipfs', assetJson);
+        return assetJson;
+      });
+    }).then(function(assetJson){
+    reader.onloadend = function(){
+      const buf = buffer.Buffer(reader.result);
+      ipfs.files.add(buf, (err, result) => {
+        if(err){
+          console.error(err);
+          return;
+        }
+        var pichash = result[0].hash;
+        console.log("Picture hash:",pichash);
+        assetJson.pics.push({"pic":pichash});
+        ipfs.add([Buffer.from(JSON.stringify(assetJson))], function(err, res){
+        if (err) throw err
+        var ipfsHash = res[0].hash; 
+        console.log("ipfs hash is: "+ipfsHash);
+        instance.UpdateTokenData(x, ipfsHash, {from: accounts[0]}).then(function(success){
+          if(success){
+            console.log('Successfully uploaded picture');
+          } else {
+            console.log('error')
+          }
+        }).catch(function(e){
+          console.log(e);
+        });
+      });
+
+      });
+    }
+    var photo = document.getElementById("photo"+x);
+    reader.readAsArrayBuffer(photo.files[0]);
+  });
+
+  },
+  uploadVid: function(x){
+    var reader = new FileReader();
+    console.log("adding video");
+    var instance;
+    Asset.deployed().then(function(g){
+      instance = g;
+      return instance.tokenMetadata.call(x);
+    }).then(function(metadata){
+      var url = "http://localhost:8080/ipfs/"+metadata;
+      return $.getJSON(url, function(assetJson) {
+        console.log('gotassetinfo from ipfs', assetJson);
+        return assetJson;
+      });
+    }).then(function(assetJson){
+    reader.onloadend = function(){
+      const buf = buffer.Buffer(reader.result);
+      ipfs.files.add(buf, (err, result) => {
+        if(err){
+          console.error(err);
+          return;
+        }
+        var vidhash = result[0].hash;
+        console.log("Video hash:",vidhash);
+        assetJson.vids.push({"vid":vidhash});
+        ipfs.add([Buffer.from(JSON.stringify(assetJson))], function(err, res){
+        if (err) throw err
+        var ipfsHash = res[0].hash; 
+        console.log("ipfs hash is: "+ipfsHash);
+        instance.UpdateTokenData(x, ipfsHash, {from: accounts[0]}).then(function(success){
+          if(success){
+            console.log('Successfully uploaded video');
+          } else {
+            console.log('error')
+          }
+        }).catch(function(e){
+          console.log(e);
+        });
+      });
+
+      });
+    }
+    var video = document.getElementById("video"+x);
+    reader.readAsArrayBuffer(video.files[0]);
+  });
+
+  },
+  uploadFile: function(x){
+    var reader = new FileReader();
+    console.log("adding file");
+    var instance;
+    Asset.deployed().then(function(g){
+      instance = g;
+      return instance.tokenMetadata.call(x);
+    }).then(function(metadata){
+      var url = "http://localhost:8080/ipfs/"+metadata;
+      return $.getJSON(url, function(assetJson) {
+        console.log('gotassetinfo from ipfs', assetJson);
+        return assetJson;
+      });
+    }).then(function(assetJson){
+    reader.onloadend = function(){
+      const buf = buffer.Buffer(reader.result);
+      ipfs.files.add(buf, (err, result) => {
+        if(err){
+          console.error(err);
+          return;
+        }
+        var filehash = result[0].hash;
+        console.log("File hash:",filehash);
+        assetJson.files.push({"file":filehash});
+        ipfs.add([Buffer.from(JSON.stringify(assetJson))], function(err, res){
+        if (err) throw err
+        var ipfsHash = res[0].hash; 
+        console.log("ipfs hash is: "+ipfsHash);
+        instance.UpdateTokenData(x, ipfsHash, {from: accounts[0]}).then(function(success){
+          if(success){
+            console.log('Successfully uploaded file');
+          } else {
+            console.log('error')
+          }
+        }).catch(function(e){
+          console.log(e);
+        });
+      });
+
+      });
+    }
+    var file = document.getElementById("file"+x);
+    reader.readAsArrayBuffer(file.files[0]);
+  });
+
+  },
   createAsset: function(){
     var name = $('#asset_name').val();
     var physaddr = $('#phys_addr').val();
@@ -214,7 +353,7 @@ return instanceUsed.tokenMetadata.call(i);
     //var file_input = document.getElementById("file_input");
     var ipfsHash = '';
     //var imghash = uploader.uploadBlob(pic_input.target.files[0]);
-    var assetJson = {name: name, physaddr: physaddr, description: description};
+    var assetJson = {name: name, physaddr: physaddr, description: description, pics: [], vids: [], files:[]};
     ipfs.add([Buffer.from(JSON.stringify(assetJson))], function(err, res){
       if (err) throw err
       ipfsHash = res[0].hash; 
@@ -312,6 +451,7 @@ return instanceUsed.tokenMetadata.call(i);
                   <span class="card-eth-address"></span>
                 </p>
                 <button type="button" class="btn btn-success edit-button" data-toggle="modal" data-target="#edit-modal`+assetCardId+`">Edit</button>
+                <button type="button" class="btn btn-danger show-button" data-toggle="modal" data-target="#show-modal`+assetCardId+`">Show More</button>
               </div>
             </div>
         </div>
@@ -343,6 +483,21 @@ return instanceUsed.tokenMetadata.call(i);
       <label for="username">Edit Description</label><br />
       <textarea class="form-control" id="desc`+i+`" rows="2"></textarea>
       <button type="button" class="btn btn-warning add-desc-button" onclick="window.App.editDescription(`+i+`)">Edit</button>
+        </div>
+      <div class="form-group">
+      <label for="username">Add Photo</label><br />
+      <input type="file" name="photo" id="photo`+i+`">
+      <button type="button" class="btn btn-warning add-desc-button" onclick="window.App.uploadPic(`+i+`)">Add Photo</button>
+        </div>
+      <div class="form-group">
+      <label for="username">Add Video</label><br />
+      <input type="file" name="video" id="video`+i+`">
+      <button type="button" class="btn btn-warning add-desc-button" onclick="window.App.uploadVid(`+i+`)">Add Video</button>
+        </div>
+      <div class="form-group">
+      <label for="username">Add File</label><br />
+      <input type="file" name="video" id="file`+i+`">
+      <button type="button" class="btn btn-warning add-desc-button" onclick="window.App.uploadFile(`+i+`)">Add File</button>
         </div>
       </div>
       <div class="modal-footer">
