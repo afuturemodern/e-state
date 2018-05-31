@@ -254,6 +254,9 @@ contract AssetToken is ERC721, Ownable {
     function show_name(uint256 _tokenId) public constant returns(string){
         return name_t[_tokenId];
     }
+    function num_ipfsHashes(uint256 _tokenId) public constant returns(uint256){
+        return ipfsHash[_tokenId].length;
+    }
     function show_physaddr(uint256 _tokenId) public constant returns(string){
         return physaddr[_tokenId];
     }

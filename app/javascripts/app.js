@@ -375,6 +375,35 @@ return instanceUsed.tokenMetadata.call(i);
       })
     });
   },
+  loadShow: function(x){
+    Asset.deployed().then(function(instance){
+      return instance.tokenMetadata.call(x);
+    }).then(function(metadata){
+      var url = "http://localhost:8080/ipfs/"+metadata;
+      return $.getJSON(url, function(assetJson) {
+        console.log('gotassetinfo from ipfs', assetJson);
+        return assetJson;
+      });
+    }).then(function(assetJson){
+      var pics = assetJson.pics;
+      var picsdiv = $('#photos-div'+x);
+      for(var i=0; i< pics.length; i++) {
+        console.log(pics[i]["pic"]);
+        var pictemplate = `<img src="http://localhost:8080/ipfs/`+pics[i]["pic"]+`" height="80px">`;
+        picsdiv.append(pictemplate);
+      }
+
+      var vids = assetJson.vids;
+      var files = assetJson.files;
+      var filesdiv = $('#files-div'+x);
+      for(var i=0; i< files.length; i++) {
+        console.log(files[i]["file"]);
+        var filetemplate = `<a href="http://localhost:8080/ipfs/`+files[i]["file"]+`" target="_blank">File `+i+`</a>`;
+        filesdiv.append(filetemplate);
+      }
+
+    });
+  },
   getAnAsset: function(instance, i){
     var instanceUsed = instance;
     var name;
@@ -451,7 +480,7 @@ return instanceUsed.tokenMetadata.call(i);
                   <span class="card-eth-address"></span>
                 </p>
                 <button type="button" class="btn btn-success edit-button" data-toggle="modal" data-target="#edit-modal`+assetCardId+`">Edit</button>
-                <button type="button" class="btn btn-danger show-button" data-toggle="modal" data-target="#show-modal`+assetCardId+`">Show More</button>
+                <button type="button" class="btn btn-danger show-button" data-toggle="modal" data-target="#show-modal`+assetCardId+`" onclick="window.App.loadShow(`+i+`); this.onclick=null;">Show More</button>
               </div>
             </div>
         </div>
@@ -508,6 +537,34 @@ return instanceUsed.tokenMetadata.call(i);
   </div>
 </div>
 
+<div class="modal fade" id="show-modal`+assetCardId+`" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Show Asset #` + i +`</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      <h3>History</h3>
+      <div id="history-div`+i+`"></div>
+
+      <h3>Photos</h3>
+      <div id="photos-div`+i+`"></div>
+      <h3>Videos</h3>
+      <div id="vids-div`+i+`"></div>
+      <h3>Files</h3>
+      <div id="files-div`+i+`"></div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
         `;
