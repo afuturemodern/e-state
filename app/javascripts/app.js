@@ -448,6 +448,9 @@ return instanceUsed.tokenMetadata.call(i);
       return instanceUsed.validated.call(i);
     }).then(function(validated){
       console.log(validated);
+      if(validated){
+        $('#'+assetCardId).find('.card-validated').show();
+      }
       return instanceUsed.tokenMetadata.call(i);
     }).then(function(metadata){
       var url = "http://localhost:8080/ipfs/"+metadata;
@@ -507,7 +510,7 @@ return instanceUsed.tokenMetadata.call(i);
                 <p class="eth-address m-0 p-0">
                   <span class="card-eth-address"></span>
                 </p>
-                <p class="card-validated">
+                <p class="card-validated" style="display: none;">
                 Verified <i class="fa fa-check-circle"></i>
                 </p>
                 <button type="button" class="btn btn-success edit-button" data-toggle="modal" data-target="#edit-modal`+assetCardId+`">Edit</button>
