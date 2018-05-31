@@ -394,6 +394,14 @@ return instanceUsed.tokenMetadata.call(i);
       }
 
       var vids = assetJson.vids;
+      var vidsdiv = $('#vids-div'+x);
+      for(var i = 0; i <vids.length; i++){
+        console.log(vids[i]["vid"]);
+        var vidtemplate = `<video width="320" height="240" controls>
+        <source src="http://localhost/8080/ipfs/`+vids[i]["vid"]+`" type="video/mp4">
+        </video>`;
+        vidsdiv.append(vidtemplate);
+      }
       var files = assetJson.files;
       var filesdiv = $('#files-div'+x);
       for(var i=0; i< files.length; i++) {
@@ -478,6 +486,9 @@ return instanceUsed.tokenMetadata.call(i);
                 <p class="card-text"></p>        
                 <p class="eth-address m-0 p-0">
                   <span class="card-eth-address"></span>
+                </p>
+                <p class="card-validated">
+                Verified <i class="fa fa-pencil"></i>
                 </p>
                 <button type="button" class="btn btn-success edit-button" data-toggle="modal" data-target="#edit-modal`+assetCardId+`">Edit</button>
                 <button type="button" class="btn btn-danger show-button" data-toggle="modal" data-target="#show-modal`+assetCardId+`" onclick="window.App.loadShow(`+i+`); this.onclick=null;">Show More</button>
