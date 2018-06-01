@@ -1,4 +1,4 @@
-const DeclaToken = artifacts.require("DeclaToken");
+/*const DeclaToken = artifacts.require("DeclaToken");
 const IcoContract = artifacts.require("IcoContract");
 const AssetToken = artifacts.require("AssetToken");
 const Rentings = artifacts.require("Rentings");
@@ -15,24 +15,24 @@ module.exports = async function(deployer) {
   await deployer.deploy(AssetToken, DeclaToken.address);
   await AssetToken.deployed().then(function(instance){asset = instance;});
 
-  token.setAssetContract(AssetToken.address);
+  await token.setAssetContract(AssetToken.address);
 
   await deployer.deploy(Rentings, DeclaToken.address, AssetToken.address);
 
-  token.setRentingsContract(Rentings.address);
+  await token.setRentingsContract(Rentings.address);
 
-  asset.setRentingsContract(Rentings.address);
+  await asset.setRentingsContract(Rentings.address);
 
   await deployer.deploy(CommunityContract, DeclaToken.address, AssetToken.address);
 
-  token.setCommunityContract(CommunityContract.address);
+  await token.setCommunityContract(CommunityContract.address);
 
-  asset.setCommunityContract(CommunityContract.address);
+  await asset.setCommunityContract(CommunityContract.address);
 
   await deployer.deploy(CommentEconomy, DeclaToken.address, AssetToken.address);
-  token.setCommentContract(CommentEconomy.address);
+  await token.setCommentContract(CommentEconomy.address);
 
-  asset.setCommentContract(CommentEconomy.address);
+  await asset.setCommentContract(CommentEconomy.address);
 
   await deployer.deploy(
     IcoContract,
@@ -49,8 +49,9 @@ module.exports = async function(deployer) {
     
     
 };
+*/
 
-/*
+
 const DeclaToken = artifacts.require("DeclaToken");
 const IcoContract = artifacts.require("IcoContract");
 const AssetToken = artifacts.require("AssetToken");
@@ -90,7 +91,7 @@ module.exports = function(deployer) {
   }).then(function(){
     asset.setCommentContract(CommentEconomy.address);
   }).then(function(){
-    deployer.deploy(
+  deployer.deploy(
       IcoContract,
       '0x627306090abaB3A6e1400e9345bC60c78a8BEf57', //owner address
       DeclaToken.address,
@@ -99,13 +100,14 @@ module.exports = function(deployer) {
       '1525791307', //05/08/2018
       '1535068800', //sometime in august, idk
       '100000000000000000', //0.1 ETH
-    );
-  }).then(() => {
-    return token.setIcoContract(IcoContract.address);
-  });  
-    
+    ).then(() => {
+      return DeclaToken.deployed().then(function(instance) {
+        return instance.setIcoContract(IcoContract.address);
+      });  
+    });
+});  
 };
-*/
+
 
 /*const DeclaToken = artifacts.require("DeclaToken");
 const IcoContract = artifacts.require("IcoContract");

@@ -360,6 +360,22 @@ return instanceUsed.tokenMetadata.call(i);
   });
 
   },
+  sellAsset: function(x){
+    var price = Number($('#asset_price'+x).val()) * 1000000000000000000;
+    var instance;
+    Asset.deployed().then(function(g){
+      instance = g;
+      return instance.ListforSale(x, price, {from: accounts[0]});
+    }).then(function(success) {
+      if(success){
+        console.log("Successfully listed asset for sale");
+      } else {
+        console.log("Error: ");
+      }
+    }).catch(function(e){
+      console.log(e);
+    });
+  },
   createAsset: function(){
     var name = $('#asset_name').val();
     var physaddr = $('#phys_addr').val();
@@ -488,6 +504,22 @@ return instanceUsed.tokenMetadata.call(i);
           $('#'+assetCardId).find('.edit-button').show();
         }
       }
+      instanceUsed.forSale(i).then(function(for_sale){
+        if(for_sale){
+          if($('#'+assetCardId).find('.card-for-sale').is(":visible")){
+            $('#'+assetCardId).find('.card-for-sale').hide();
+          } else {
+            $('#'+assetCardId).find('.card-for-sale').show();
+          }
+          if(address != accounts[0]){
+            if($('#'+assetCardId).find('.buy-button').is(":visible")){
+              $('#'+assetCardId).find('.buy-button').hide();
+            } else {
+              $('#'+assetCardId).find('.buy-button').show();
+            }
+          }
+        }
+      });
       instanceUsed.hasCred.call(accounts[0]).then(function(isvalidator){
         if(isvalidator){
           instanceUsed.show_validated(i).then(function(valid){
@@ -498,6 +530,18 @@ return instanceUsed.tokenMetadata.call(i);
                     $('#'+assetCardId).find('.validate-button').hide();
                   } else {
                     $('#'+assetCardId).find('.validate-button').show();
+                  }
+                }
+              });
+            } else {
+              instanceUsed.forSale(i).then(function(for_sale){
+                if(!for_sale){
+                  if(address == accounts[0]){
+                    if($('#'+assetCardId).find('.sale-button').is(":visible")){
+                      $('#'+assetCardId).find('.sale-button').hide();
+                    } else {
+                      $('#'+assetCardId).find('.sale-button').show();
+                    }
                   }
                 }
               });
@@ -546,12 +590,41 @@ return instanceUsed.tokenMetadata.call(i);
                 <p class="card-validated" style="display: none;">
                 Verified <i class="fa fa-check-circle"></i>
                 </p>
+                <p class="card-for-sale" style="display: none;">
+                For Sale <i class="fa fa-star"></i>
+                </p>
                 <button type="button" class="btn btn-success edit-button" data-toggle="modal" data-target="#edit-modal`+assetCardId+`">Edit</button>
                 <button type="button" class="btn btn-danger show-button" data-toggle="modal" data-target="#show-modal`+assetCardId+`" onclick="window.App.loadShow(`+i+`); this.onclick=null;">Show More</button>
                 <button type="button" class="btn btn-success validate-button" style="display: none" onclick="window.App.ValidateAsset(`+i+`); this.onclick=null;">Validate</button>
+                <button type="button" class="btn btn-warning sale-button" style="display: none" data-toggle="modal" data-target="#sale-modal`+assetCardId+`">List For Sale</button>
+                <button type="button" class="btn btn-success buy-button" style="display: none" data-toggle="modal" data-target="#buy-modal`+assetCardId+`">Buy Asset</button>
               </div>
             </div>
         </div>
+
+<div class="modal fade" id="sale-modal`+assetCardId+`" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Sell Asset #` + i +`</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      <div class="alert alert-danger" role="alert">
+        Sales are Final! You can stop them before someone buys, but not after. Be very careful to pick a price you actually want to sell your property for. 
+      </div>
+      <div class="form-group">
+      <label for="name">Selling Price</label><br />
+      <input type="number" min="0.00" class="form-control" id="asset_price`+i+`" >
+      
+      </div>
+      <button type="button" class="btn btn-success sale-button" onclick="window.App.sellAsset(`+i+`);">List For Sale</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal fade" id="edit-modal`+assetCardId+`" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
