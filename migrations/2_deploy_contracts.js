@@ -10,17 +10,16 @@ module.exports = function(deployer) {
     deployer.deploy(AssetToken, DeclaToken.address).then( () => {
       return DeclaToken.deployed().then(function(instance){
         return instance.setAssetContract(AssetToken.address);
-      }).then(function(){
-            deployer.deploy(Rentings, DeclaToken.address, AssetToken.address).then( () => {
+      })});
+    deployer.deploy(Rentings, DeclaToken.address, AssetToken.address).then( () => {
       DeclaToken.deployed().then(function(instance){
         instance.setRentingsContract(Rentings.address);
       });
-      return AssetToken.deployed().then(function(instance){
-        instance.setRentingsContract(Rentings.address);
-      }
-    );
+	    return AssetToken.deployed().then(function(instance){
+		    instance.setRentingsContract(Rentings.address);
+	    }
+		);
     });
-          }).then(function(){
     deployer.deploy(CommunityContract, DeclaToken.address, AssetToken.address).then( () => {
       DeclaToken.deployed().then(function(instance){
         instance.setCommunityContract(CommunityContract.address);
@@ -30,7 +29,6 @@ module.exports = function(deployer) {
       }
     );
     });
-  }).then(function(){
     deployer.deploy(CommentEconomy, DeclaToken.address, AssetToken.address).then( () => {
       DeclaToken.deployed().then(function(instance){
         instance.setCommentContract(CommentEconomy.address);
@@ -40,14 +38,6 @@ module.exports = function(deployer) {
       }
     );
     });
-
-
-  });
-
-    });
-
-
-
     return deployer.deploy(
       IcoContract,
       '0x627306090abaB3A6e1400e9345bC60c78a8BEf57', //owner address
@@ -64,4 +54,3 @@ module.exports = function(deployer) {
     });
   });
 };
-
