@@ -463,6 +463,32 @@ return instanceUsed.tokenMetadata.call(i);
 
     });
   },
+  showPrice: function(i){
+    var instance;
+    Asset.deployed().then(function(s){
+      instance = s;
+    }).then(function(){
+        instance.tokenPrice(i).then(function(price){
+        $('#buy-modal'+i).find('.buy-price-p2').text(price/1000000000000000000);
+      });
+    });
+  },
+  buyAsset: function(i){
+    var instance;
+    Asset.deployed().then(function(s){
+      instance = s;
+    }).then(function(){
+      return instance.BuyToken(i, {from: accounts[0]});
+    }).then(function(success){
+      if(success){
+        console.log("Successfully bought asset");
+      } else {
+        console.log("Error: ");
+      }
+    }).catch(function(e){
+      console.log(e);
+    });
+  },
   getAnAsset: function(instance, i){
     var instanceUsed = instance;
     var name;
@@ -517,6 +543,10 @@ return instanceUsed.tokenMetadata.call(i);
             } else {
               $('#'+assetCardId).find('.buy-button').show();
             }
+            instanceUsed.tokenPrice(i).then(function(price){
+              $('#'+assetCardId).find('.card-price').text(price/1000000000000000000);
+            });
+            
           }
         }
       });
@@ -592,15 +622,40 @@ return instanceUsed.tokenMetadata.call(i);
                 </p>
                 <p class="card-for-sale" style="display: none;">
                 For Sale <i class="fa fa-star"></i>
+                Price: <span class="card-price" style="color:06e"></span>
                 </p>
                 <button type="button" class="btn btn-success edit-button" data-toggle="modal" data-target="#edit-modal`+assetCardId+`">Edit</button>
                 <button type="button" class="btn btn-danger show-button" data-toggle="modal" data-target="#show-modal`+assetCardId+`" onclick="window.App.loadShow(`+i+`); this.onclick=null;">Show More</button>
                 <button type="button" class="btn btn-success validate-button" style="display: none" onclick="window.App.ValidateAsset(`+i+`); this.onclick=null;">Validate</button>
                 <button type="button" class="btn btn-warning sale-button" style="display: none" data-toggle="modal" data-target="#sale-modal`+assetCardId+`">List For Sale</button>
-                <button type="button" class="btn btn-success buy-button" style="display: none" data-toggle="modal" data-target="#buy-modal`+assetCardId+`">Buy Asset</button>
+                <button type="button" class="btn btn-success buy-button" style="display: none" data-toggle="modal" data-target="#buy-modal`+i+`" onclick="window.App.showPrice(`+i+`); this.onclick=null;">Buy Asset</button>
               </div>
             </div>
         </div>
+<div class="modal fade" id="buy-modal`+i+`" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Buy Asset #` + i +`</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      <div class="alert alert-danger" role="alert">
+        Purchases are Final! Be sure you are actually willing to pay the price.
+      </div>
+      <div class="form-group">
+      <label for="name">Price</label>
+      <span class="buy-price-p2" style="color: #0056e8">
+      </span>
+      </div>
+      <button type="button" class="btn btn-success buy-button" onclick="window.App.buyAsset(`+i+`);">Buy Asset</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal fade" id="sale-modal`+assetCardId+`" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
