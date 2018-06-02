@@ -384,7 +384,7 @@ return instanceUsed.tokenMetadata.call(i);
     //var file_input = document.getElementById("file_input");
     var ipfsHash = '';
     //var imghash = uploader.uploadBlob(pic_input.target.files[0]);
-    var assetJson = {name: name, physaddr: physaddr, description: description, pics: [], vids: [], files:[]};
+    var assetJson = {name: name, physaddr: physaddr, description: description, pics: [], vids: [], files:[], owners:[{owner: accounts[0], price: 10, timestamp: Date.now()}]};
     ipfs.add([Buffer.from(JSON.stringify(assetJson))], function(err, res){
       if (err) throw err
       ipfsHash = res[0].hash; 
@@ -460,6 +460,16 @@ return instanceUsed.tokenMetadata.call(i);
         var filetemplate = `<a href="http://localhost:8080/ipfs/`+files[i]["file"]+`" target="_blank">File `+i+`</a>`;
         filesdiv.append(filetemplate);
       }
+      var owners = assetJson.owners;
+      var ownersdiv = $('#history-div'+x);
+      for(var i=0; i< owners.length; i++) {
+        console.log(owners[i]["owner"]);
+        console.log(owners[i]["price"]);
+        console.log(owners[i]["timestamp"]);
+        var stamp = new Date(parseInt(owners[i]["timestamp"])).toLocaleString();
+        var ownertemplate = `<li>Owner: `+owners[i]["owner"]+`, Purchase Price: `+owners[i]["price"]+`, Date and Time Purchased: `+stamp;
+        ownersdiv.append(ownertemplate);
+      }
 
     });
   },
@@ -481,7 +491,40 @@ return instanceUsed.tokenMetadata.call(i);
       return instance.BuyToken(i, {from: accounts[0]});
     }).then(function(success){
       if(success){
-        console.log("Successfully bought asset");
+        console.log("Successfully bought asset. Please click to make it IPFS official");
+    
+        Asset.deployed().then(function(instance){
+          return instance.tokenMetadata.call(i);
+        }).then(function(metadata){
+          var url = "http://localhost:8080/ipfs/"+metadata;
+          return $.getJSON(url, function(assetJson) {
+            console.log('gotassetinfo from ipfs', assetJson);
+            return assetJson;
+          });
+        }).then(function(assetJson){
+          instance.tokenPrice(i).then(function(price){
+            assetJson.owners.push({owner: accounts[0], price: price/1000000000000000000, timestamp: Date.now()});
+            return assetJson;
+          }).then(function(assetJson){
+            console.log(assetJson.owners);
+            ipfs.add([Buffer.from(JSON.stringify(assetJson))], function(err, res){
+              if (err) throw err
+              var ipfsHash = res[0].hash; 
+              console.log("ipfs hash is: "+ipfsHash);
+              instance.UpdateTokenData(i, ipfsHash, {from: accounts[0]}).then(function(success){
+              if(success){
+                console.log('Successfully added ownership');
+              } else {
+                console.log('error')
+              }
+            });
+          });
+          });
+
+        }).catch(function(e){
+          console.log(e);
+        });
+        
       } else {
         console.log("Error: ");
       }
@@ -743,8 +786,7 @@ return instanceUsed.tokenMetadata.call(i);
         </button>
       </div>
       <div class="modal-body">
-      <h3>History</h3>
-      <div id="history-div`+i+`"></div>
+
 
       <h3>Photos</h3>
       <div id="carouselExampleControlsPic" class="carousel slide" data-ride="carousel">
@@ -785,6 +827,12 @@ return instanceUsed.tokenMetadata.call(i);
     
       <h3>Files</h3>
       <div id="files-div`+i+`"></div>
+            <h3>Ownership History</h3>
+      <div>
+      <ul id="history-div`+i+`">
+
+      </ul>
+      </div>
 
       </div>
       <div class="modal-footer">

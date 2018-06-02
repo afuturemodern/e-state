@@ -154,7 +154,7 @@ contract ERC721 {
         //ownerTokens[_owner][_tokenId] = 0;
    }
    function addToTokenList(address _owner, uint256 _tokenId) internal {
-        ownerTokens[_owner][balances[_owner]+1] = _tokenId;
+        ownerTokens[_owner][balances[_owner]-1] = _tokenId;
    }
    function ownerOf(uint256 _tokenId) public constant returns (address owner){
         require(tokenExists[_tokenId]);
