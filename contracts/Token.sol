@@ -1,5 +1,10 @@
 pragma solidity ^0.4.21;
 
+/// @title ULO, a token-based dapp for public, transparent, verifiable, and immutable property asset ownership and usage
+///@author Trevor Martin of Future Modern
+///@notice 
+///@dev
+
 interface ERC20 {
     function transferFrom(address _from, address _to, uint _value) external returns (bool);
     function approve(address _spender, uint _value) external returns (bool);
@@ -18,17 +23,19 @@ contract Ownable {
     constructor() public{
         owner = msg.sender;
     }
+    ///@notice onlyOwner checks to ensure that certain functions are only callable by the contract owner
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
+    ///@notice transferOwnership allows transfer of ownership
     function transferOwnership(address newOwner) onlyOwner public {
       if (newOwner != address(0)){
         owner = newOwner;
       }
     }
 }
-
+///@title ERC223 receiving contract
 contract ERC223ReceivingContract {
 
     struct TKN {
@@ -55,9 +62,7 @@ contract ERC223ReceivingContract {
 	}
     
 }
-
-
-
+/// @title Simple Token Contract
 contract Token {
     string internal _symbol;
     string internal _name;
@@ -93,7 +98,7 @@ contract Token {
     function transfer(address _to, uint _value) external returns (bool);
     event Transfer(address indexed _from, address indexed _to, uint _value);
 }
-
+/// @title SafeMath Contract for making sure math is done correctly
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -119,15 +124,15 @@ library SafeMath {
     return c;
   }
 }
-
+/// @title ERC721 Contract
 contract ERC721 {
    // ERC20 compatible functions
    using SafeMath for uint;
-   string internal __name = "Decla Property Token";
+   string internal __name = "ULO Property Token";
    function name() public constant returns (string _name){
         return __name;
    }
-   string internal __symbol = "DPT"; 
+   string internal __symbol = "ULO"; 
    function symbol() public constant returns (string _symbol){
         return __symbol;
    }
@@ -160,6 +165,7 @@ contract ERC721 {
         require(tokenExists[_tokenId]);
         return tokenOwners[_tokenId];
    }
+   /// @notice this function approves the use of a token by another party. Not sure how useful this is in practice
    function approve(address _to, uint256 _tokenId) public{
         require(msg.sender == ownerOf(_tokenId));
         require(msg.sender != _to);
@@ -167,6 +173,7 @@ contract ERC721 {
         allowed[msg.sender][_to] = _tokenId; //this is iffy
         emit Approval(msg.sender, _to, _tokenId);
    }
+   /// @notice This allows a user to take ownership of a token that has been approved for said user.
    function takeOwnership(uint256 _tokenId) public{
         require(tokenExists[_tokenId]);
         address oldOwner = ownerOf(_tokenId);
@@ -183,6 +190,7 @@ contract ERC721 {
         balances[newOwner] = balances[newOwner].add(1);
         emit Transfer(oldOwner, newOwner, _tokenId);
    }
+   /// @notice This is a simple transfer function
    function transfer(address _to, uint256 _tokenId) public{
         address currentOwner = msg.sender;
         address newOwner = _to;
@@ -205,6 +213,7 @@ contract ERC721 {
         return ownerTokens[_owner][_index];
    }
    // Token metadata
+   /// @notice This is the core of the ERC-721 standard, the metadata which allows one to see associated information on IPFS
    function tokenMetadata(uint256 _tokenId) public constant returns (string infoUrl){
         return tokenLinks[_tokenId];
    }
@@ -212,6 +221,9 @@ contract ERC721 {
    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
 }
+
+///@author Trevor Martin
+///@title Asset Token - the meat of ULO's main functionality
 contract AssetToken is ERC721, Ownable {
     using SafeMath for uint;
     DeclaToken public dec;
@@ -285,6 +297,7 @@ contract AssetToken is ERC721, Ownable {
         return forSale[_tokenId];
     }
     //Asset token handling
+    /// @notice Creates an asset token, for an asset with a given physical location, name, and associated ipfs hash. Ipfs hash gets stored into an array of such hashes to allow assessibility of previously associated information
     function CreateAssetToken(string _name_t, string _physaddr, string _link) public returns (bool){
         require(dec.balanceOf(msg.sender) > reqd_erc223_amount);
         dec.lock_by_contract(msg.sender, reqd_erc223_amount);
@@ -300,17 +313,20 @@ contract AssetToken is ERC721, Ownable {
         emit CreateToken(msg.sender, __totalSupply.sub(1));
         return true;
     }
+    /// @notice Changes ipfs hash, but allows one to still access previous hashes and thus previous data
     function UpdateTokenData(uint256 _tokenId, string _ipfsHash) public returns (bool){
         require(tokenOwners[_tokenId] == msg.sender);
         tokenLinks[_tokenId] = _ipfsHash;
         ipfsHash[_tokenId].push(_ipfsHash);
     }
+    /// @notice Changes name stored on blockchain
     function ChangeName(uint256 _tokenId, string _name_t) public returns (bool){
         require(tokenOwners[_tokenId] == msg.sender);
         require(tokenExists[_tokenId]);
         name_t[_tokenId] = _name_t;
         return true;
     }
+    /// @notice Changes physical address stored on blockchain
     function ChangePhysAddr(uint256 _tokenId, string _physaddr) public returns (bool){
         require(tokenOwners[_tokenId] == msg.sender);
         require(tokenExists[_tokenId]);
@@ -318,16 +334,19 @@ contract AssetToken is ERC721, Ownable {
         return true;
     }
     //renting
+    /// @notice Makes an asset owned by sender rentable if it's valid
     function MakeRentable(uint256 _tokenId) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         require(validated[_tokenId]);
         require(!invalidated[_tokenId]);
         rentable[_tokenId] = true;
     }
+    /// @notice Makes an asset owned by sender non-rentable
     function MakeNonRentable(uint256 _tokenId) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         rentable[_tokenId] = false;
     }
+    /// @notice Makes an asset owned by sender rent-to-ownable
     function MakeRentToOwnable(uint256 _tokenId, uint256 _rentToOwnAmount) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         require(validated[_tokenId]);
@@ -335,29 +354,34 @@ contract AssetToken is ERC721, Ownable {
         rentToOwnable[_tokenId] = true;
         rentToOwnAmount[_tokenId] = _rentToOwnAmount;
     }
+    /// @notice Changes the Rent to own amount
     function ChangeRentToOwnAmount(uint256 _tokenId, uint256 _rentToOwnAmount) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         rentToOwnAmount[_tokenId] = _rentToOwnAmount;
     }
-    
+    /// @notice Makes asset non-rent-to-ownable - for people who have just acquired asset through rent-to-own to call
     function MakeNonRentToOwnable(uint256 _tokenId) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         rentToOwnable[_tokenId] = false;
     }
     //cred
+    /// @notice Gives credibility to an address by fiat - only callable by contract owner
     function GiveCredO(address _recipient) onlyOwner public{
         hasCred[_recipient] = true;
         emit CredGiven(_recipient);
     }
+    /// @notice Internal function to grant credibility, only callable by contract
     function GrantCred(address _recipient) internal{
         hasCred[_recipient] = true;
         emit CredGiven(_recipient);
     }
+    /// @notice Internal function to revoke credibility, only callable by contract
     function RevokeCred(address _recipient) internal{
         hasCred[_recipient] = false;
         emit CredLost(_recipient);
     }
     //voting/validation
+    /// @notice Votes for an asset to be validated - requires cred to send
     function VoteAssetToken(uint256 _tokenId) public{//function to vote for validity of token/owner
         require(hasCred[msg.sender]);
         require(!voted_for[_tokenId][msg.sender]);
@@ -370,6 +394,7 @@ contract AssetToken is ERC721, Ownable {
         emit VoteToken(_tokenId, msg.sender);
 
     }
+    /// @notice Votes against an asset token, to revoke validity if fake asset - requires cred
     function VoteAgainstAssetToken(uint256 _tokenId) public{//function to vote for validity of token/owner
         require(hasCred[msg.sender]);
         require(!voted_against[_tokenId][msg.sender]);
@@ -381,6 +406,7 @@ contract AssetToken is ERC721, Ownable {
         }
 
     }
+    /// @notice - internal function to validate asset token, allowing it to be bought, sold, and rented
     function ValidateAssetToken(uint256 _tokenId) internal{
         validated[_tokenId] = true;
         tokenValidations[tokenOwners[_tokenId]] = tokenValidations[tokenOwners[_tokenId]].add(1);
@@ -391,6 +417,7 @@ contract AssetToken is ERC721, Ownable {
         }
         emit ValidateToken(_tokenId, tokenOwners[_tokenId]);
     }
+    /// @notice -internal function to invalidate asset token, revoking buy, sell, and renting priveleges
     function InvalidateAssetToken(uint256 _tokenId) internal{
         validated[_tokenId] = false;
         invalidated[_tokenId] = true;
@@ -402,6 +429,7 @@ contract AssetToken is ERC721, Ownable {
 
     }
     //sale
+    /// @notice - List asset for sale
     function ListforSale(uint256 _tokenId, uint256 _price) public returns(bool res) {
         require(msg.sender == tokenOwners[_tokenId]);
         require(validated[_tokenId]);
@@ -412,13 +440,14 @@ contract AssetToken is ERC721, Ownable {
         emit ListToken(_tokenId, _price);
         return true; 
     }
-
+    /// @notice - Delist asset 
     function DeListforSale(uint256 _tokenId) public returns (bool){
         require(msg.sender == tokenOwners[_tokenId]);
         forSale[_tokenId] = false;
         emit DeListToken(_tokenId, msg.sender);
         return true;
     }
+    /// @notice - Buy asset (no transaction fees right now)
     function BuyToken(uint256 _tokenId) public returns (bool){
         require(dec.balanceOf(msg.sender) >= tokenPrice[_tokenId]);
         require(forSale[_tokenId]);
@@ -437,21 +466,25 @@ contract AssetToken is ERC721, Ownable {
         return true;
         
     }
+    /// @notice - set rentings contract for it to call functions here
     function setRentingsContract(address _rentingsContract) onlyOwner public{
         if (_rentingsContract != address(0)){
             rentingsContract = _rentingsContract;
         }
     }
+    /// @notice - set community contract for it to call functions here
     function setCommunityContract(address _communityContract) onlyOwner public{
         if (_communityContract != address(0)){
             communityContract = _communityContract;
         }
     }
+    /// @notice - set comment contract for it to call functions here
     function setCommentContract(address _commentContract) onlyOwner public{
         if (_commentContract != address(0)){
             commentContract = _commentContract;
         }
     }
+    /// @notice Possess asset based on renting - only callable by renting contract
     function RentPossess(uint256 _tokenId, address _possessor) public {
         require(msg.sender == rentingsContract);
         address _seller = tokenOwners[_tokenId];
@@ -477,7 +510,8 @@ contract AssetToken is ERC721, Ownable {
     event AssetSale(address _buyer, address _seller, uint256 amount);
     event RentToOwnPossess(uint256 _tokenId, address _new_owner);
 }
-
+/// @title Rentings
+/// @author Trevor Martin
 contract Rentings{
     using SafeMath for uint;
         //renter data
@@ -864,8 +898,9 @@ contract Pausable is Ownable {
         return true;
     }
 }
+///@title DeclaToken - the main token contract, which has Lock and Burn functionality as well as reward pot for commenters
 
-contract DeclaToken is Token("DCT", "Decla Token", 18, 300000000000000000000000000), ERC20, ERC223, Pausable {
+contract DeclaToken is Token("ULO", "ULO Token", 18, 300000000000000000000000000), ERC20, ERC223, Pausable {
 
     address public icoContract;
     address public assetContract;
@@ -1056,6 +1091,7 @@ contract DeclaToken is Token("DCT", "Decla Token", 18, 3000000000000000000000000
     }
 }
 // =======Crowdsale Contract Start ========
+///@title IcoContract, the contract for ULO's crowdsale
 contract IcoContract is Pausable{
     using SafeMath for uint;
     DeclaToken public ico;
