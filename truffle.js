@@ -11,6 +11,19 @@ module.exports = {
       port: 7545,
       network_id: "*" // Match any network id
     },
+    ropsten: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/"+infura_apikey)
+      },
+      network_id: 3
+    },
+    rinkeby: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/"+infura_apikey)
+      },
+      gasPrice: 2000000000000,
+      network_id: 3
+    }
   }
   
 };

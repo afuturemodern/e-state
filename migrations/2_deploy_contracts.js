@@ -88,7 +88,7 @@ module.exports = function(deployer) {
   }).then(function(){
   deployer.deploy(
       IcoContract,
-      '0x627306090abaB3A6e1400e9345bC60c78a8BEf57', //owner address
+      '0x7D239D841D4C5713CB3CbA2a8D74E6d85F42EfCd', //owner address
       DeclaToken.address,
       '1000000000000000000000000000',//1000000000 Token
       '1000',
