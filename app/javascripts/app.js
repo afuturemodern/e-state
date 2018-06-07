@@ -789,16 +789,16 @@ return instanceUsed.tokenMetadata.call(i);
 
 
       <h3>Photos</h3>
-      <div id="carouselExampleControlsPic" class="carousel slide" data-ride="carousel">
+      <div id="carouselExampleControlsPic`+i+`" class="carousel slide" data-ride="carousel">
   <div class="carousel-inner" id="photos-div`+i+`">
 
 
   </div>
-  <a class="carousel-control-prev" href="#carouselExampleControlsPic" role="button" data-slide="prev">
+  <a class="carousel-control-prev" href="#carouselExampleControlsPic`+i+`" role="button" data-slide="prev">
     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
     <span class="sr-only">Previous</span>
   </a>
-  <a class="carousel-control-next" href="#carouselExampleControlsPic" role="button" data-slide="next">
+  <a class="carousel-control-next" href="#carouselExampleControlsPic`+i+`" role="button" data-slide="next">
     <span class="carousel-control-next-icon" aria-hidden="true"></span>
     <span class="sr-only">Next</span>
   </a>
@@ -806,18 +806,18 @@ return instanceUsed.tokenMetadata.call(i);
 
       
       <h3>Videos</h3>
-      <div id="carouselExampleControlsvid" class="carousel slide" data-ride="carousel">
+      <div id="carouselExampleControlsvid`+i+`" class="carousel slide" data-ride="carousel">
       <div class="carousel-inner" id="vids-div`+i+`">
 
 
 
       </div>
 
-  <a class="carousel-control-prev" href="#carouselExampleControlsvid" role="button" data-slide="prev">
+  <a class="carousel-control-prev" href="#carouselExampleControlsvid`+i+`" role="button" data-slide="prev">
     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
     <span class="sr-only">Previous</span>
   </a>
-  <a class="carousel-control-next" href="#carouselExampleControlsvid" role="button" data-slide="next">
+  <a class="carousel-control-next" href="#carouselExampleControlsvid`+i+`" role="button" data-slide="next">
     <span class="carousel-control-next-icon" aria-hidden="true"></span>
     <span class="sr-only">Next</span>
   </a>
@@ -837,7 +837,7 @@ return instanceUsed.tokenMetadata.call(i);
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
+        
       </div>
     </div>
   </div>
