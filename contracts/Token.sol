@@ -2,8 +2,8 @@ pragma solidity ^0.4.21;
 
 /// @title ULO, a token-based dapp for public, transparent, verifiable, and immutable property asset ownership and usage
 ///@author Trevor Martin of Future Modern
-///@notice 
-///@dev
+/// 
+///
 
 interface ERC20 {
     function transferFrom(address _from, address _to, uint _value) external returns (bool);
@@ -812,6 +812,7 @@ contract CommentEconomy {
     DeclaToken public dec;
     address public decAddress;
     address public assetAddress;
+    uint256 stakeval = 30000000000000000; //3 hundredths of a token
     constructor(address _decAddress, address _assetAddress) public{
         decAddress = _decAddress;
         dec = DeclaToken(decAddress);
@@ -832,6 +833,7 @@ contract CommentEconomy {
     mapping(uint256 => comment[]) tokenComments;
     function createComment(uint _tokenId, string hash) public returns (bool){
         tokenComments[_tokenId].push(comment(0,0,false, false,msg.sender, hash));
+        dec.lock_by_contract(msg.sender, stakeval);
     }
 
     function upvoteComment(uint256 _tokenId, uint256 comment_number) public returns (bool){
@@ -842,7 +844,7 @@ contract CommentEconomy {
             //make payment if haven't already
             if(tokenComments[_tokenId][comment_number].paid == false){
                 reward_commenter(_tokenId, comment_number);
-                
+                dec.unlock_by_contract(tokenComments[_tokenId][comment_number].commenter,stakeval);  
             }
         }
         return true;
@@ -979,7 +981,7 @@ contract DeclaToken is Token("ULO", "ULO Token", 18, 300000000000000000000000000
         _lock(_locker, _value);
     }
     function unlock_by_contract(address _locker, uint256 _value) public{
-        require(msg.sender == assetContract);
+        require(msg.sender == assetContract || msg.sender == commentContract);
         require(_value > 0);
         _unlock(_locker, _value);
     }
